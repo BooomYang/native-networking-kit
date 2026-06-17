@@ -35,6 +35,6 @@
 ## 验收标准
 
 - 新的 Codex thread 读取 `README.md`、`AGENTS.md` 和 `docs/verification-matrix.md` 后，可以恢复项目目的和命令。
-- iOS package tests 和 SwiftUI example build 通过 `./scripts/verify-ios.sh`。
+- iOS package tests 和 Xcode host example app build 通过 `./scripts/verify-ios.sh`。
 - Android 的 standard library、example、test、lint、debug assemble 和 local Maven publishing tasks 由 `./scripts/verify-android.sh` 覆盖。
 - Harmony 具备 DevEco/Hvigor 风格 skeleton，并有明确的 pending verification notes。

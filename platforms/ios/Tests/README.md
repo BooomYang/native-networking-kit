@@ -8,4 +8,4 @@
 
 Test suite 使用 injected mock engines，不执行 real network I/O。
 
-Verification script 还会构建 `platforms/ios/Examples/NativeNetKitExample`。
+Verification script 还会构建 `platforms/ios/Examples/NativeNetKitExample/NativeNetKitExample.xcodeproj`。
