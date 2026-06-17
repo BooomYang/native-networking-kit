@@ -1,0 +1,9 @@
+{
+  "name": "native-netkit-example-workspace",
+  "version": "0.1.0",
+  "description": "NativeNetKit HarmonyOS example workspace.",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@aifirst/native-netkit": "file:../native-netkit"
+  }
+}

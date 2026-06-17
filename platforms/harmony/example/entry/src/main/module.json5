@@ -1,0 +1,22 @@
+{
+  "module": {
+    "name": "entry",
+    "type": "entry",
+    "description": "NativeNetKit Phase 1 HarmonyOS example.",
+    "mainElement": "EntryAbility",
+    "deviceTypes": [
+      "phone",
+      "tablet"
+    ],
+    "abilities": [
+      {
+        "name": "EntryAbility",
+        "srcEntry": "./ets/EntryAbility.ets",
+        "description": "NativeNetKit example ability.",
+        "exported": true,
+        "startWindowIcon": "$media:app_icon",
+        "startWindowBackground": "$color:start_window_background"
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "module": {
+    "name": "NativeNetKit",
+    "type": "har",
+    "description": "NativeNetKit Phase 1 HarmonyOS library module.",
+    "deviceTypes": [
+      "phone",
+      "tablet"
+    ]
+  }
+}

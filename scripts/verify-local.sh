@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+"${ROOT_DIR}/scripts/doctor.sh"
+"${ROOT_DIR}/scripts/verify-ios.sh"
+"${ROOT_DIR}/scripts/verify-android.sh"
+"${ROOT_DIR}/scripts/verify-harmony.sh"

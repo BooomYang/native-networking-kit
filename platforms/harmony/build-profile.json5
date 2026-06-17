@@ -1,0 +1,31 @@
+{
+  "app": {
+    "signingConfigs": [],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "NativeNetKit",
+      "srcPath": "./native-netkit",
+      "targets": [
+        {
+          "name": "default"
+        }
+      ]
+    },
+    {
+      "name": "entry",
+      "srcPath": "./example/entry",
+      "targets": [
+        {
+          "name": "default"
+        }
+      ]
+    }
+  ]
+}

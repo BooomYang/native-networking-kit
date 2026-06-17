@@ -1,0 +1,7 @@
+{
+  "name": "native-networking-kit-harmony",
+  "version": "0.1.0",
+  "description": "Phase 1 HarmonyOS workspace for NativeNetKit.",
+  "license": "UNLICENSED",
+  "dependencies": {}
+}

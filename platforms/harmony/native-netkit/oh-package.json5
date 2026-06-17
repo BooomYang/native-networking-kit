@@ -1,0 +1,9 @@
+{
+  "name": "@aifirst/native-netkit",
+  "version": "0.1.0",
+  "description": "Phase 1 thin HarmonyOS engine adapter for NativeNetKit.",
+  "main": "Index.ets",
+  "author": "AI First",
+  "license": "UNLICENSED",
+  "dependencies": {}
+}

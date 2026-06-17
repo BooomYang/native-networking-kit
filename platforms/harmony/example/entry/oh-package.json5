@@ -1,0 +1,11 @@
+{
+  "name": "entry",
+  "version": "0.1.0",
+  "description": "NativeNetKit HarmonyOS example entry module.",
+  "main": "",
+  "author": "AI First",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@aifirst/native-netkit": "file:../../native-netkit"
+  }
+}
