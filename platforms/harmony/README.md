@@ -55,3 +55,5 @@ hvigorw assembleHap
 - 如果新增运行时示例，再补充设备或模拟器运行验收。
 
 在这些动作真实执行前，任何 Harmony 相关改动都只能报告为结构或文档层面的更新。
+
+三端通用测试分层和 PR 审阅规则见 `../../docs/testing-strategy.md`；Harmony L2/L3 需要在 Hvigor/DevEco 验证可运行后再补。

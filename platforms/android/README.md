@@ -45,6 +45,7 @@ test lint :example:assembleDebug publishToMavenLocal
 ## 当前验收边界
 
 - Unit tests 使用 injected mock engine，不执行 real network I/O。
+- 三端通用测试分层和 PR 审阅规则见 `../../docs/testing-strategy.md`；Android L2/L3 仍待后续 requirement loop 补齐。
 - `:example:assembleDebug` 只能证明 example app 可以构建，不等同于已经在 Android Studio 或模拟器中手动运行通过。
 - 如果当前机器缺少 Android SDK，`./scripts/verify-android.sh` 应明确失败并提示配置 `ANDROID_HOME` 或 `ANDROID_SDK_ROOT`，不能把该平台标记为 passed。
 
