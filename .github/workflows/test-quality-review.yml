@@ -5,9 +5,12 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   pull_request_review:
     types: [submitted, edited, dismissed]
+  issue_comment:
+    types: [created, edited, deleted]
 
 permissions:
   contents: read
+  issues: read
   pull-requests: read
 
 jobs:
@@ -18,7 +21,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Require independent test quality review
+      - name: Require maintainer test quality confirmation
         run: ./scripts/check-test-quality-review.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

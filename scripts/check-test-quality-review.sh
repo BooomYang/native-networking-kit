@@ -60,10 +60,20 @@ function isMaintainerConfirmation(review, author, repoOwner) {
   );
 }
 
-function hasMaintainerConfirmation(reviews, author, repoOwner) {
-  return latestReviewByUser(reviews).some((review) => {
+function isMaintainerComment(comment, author, repoOwner) {
+  const login = comment.user && comment.user.login;
+  const body = comment.body || "";
+  return login && (login === author || login === repoOwner) && body.includes(marker);
+}
+
+function hasMaintainerConfirmation(reviews, comments, author, repoOwner) {
+  const hasReviewConfirmation = latestReviewByUser(reviews).some((review) => {
     return isMaintainerConfirmation(review, author, repoOwner);
   });
+  const hasCommentConfirmation = comments.some((comment) => {
+    return isMaintainerComment(comment, author, repoOwner);
+  });
+  return hasReviewConfirmation || hasCommentConfirmation;
 }
 
 function requestJson(path) {
@@ -124,6 +134,7 @@ async function loadContext() {
       repoOwner: process.env.TEST_QUALITY_REPO_OWNER || process.env.TEST_QUALITY_PR_AUTHOR || "author",
       files: localFiles,
       reviews: JSON.parse(process.env.TEST_QUALITY_REVIEWS_JSON || "[]"),
+      comments: JSON.parse(process.env.TEST_QUALITY_COMMENTS_JSON || "[]"),
     };
   }
 
@@ -133,18 +144,21 @@ async function loadContext() {
   }
 
   const event = JSON.parse(fs.readFileSync(eventPath, "utf8"));
-  const pullRequest = event.pull_request;
-  if (!pullRequest) {
+  const pullRequest = event.pull_request || null;
+  const issue = event.issue || null;
+  if (!pullRequest && !(issue && issue.pull_request)) {
     return null;
   }
 
   const repo = process.env.GITHUB_REPOSITORY;
-  const prNumber = pullRequest.number;
+  const prNumber = pullRequest ? pullRequest.number : issue.number;
+  const pr = pullRequest || await requestJson(`/repos/${repo}/pulls/${prNumber}`);
   return {
-    author: pullRequest.user.login,
+    author: pr.user.login,
     repoOwner: repo.split("/")[0],
     files: (await fetchPaged(`/repos/${repo}/pulls/${prNumber}/files`)).map((file) => file.filename),
     reviews: await fetchPaged(`/repos/${repo}/pulls/${prNumber}/reviews`),
+    comments: await fetchPaged(`/repos/${repo}/issues/${prNumber}/comments`),
   };
 }
 
@@ -161,15 +175,15 @@ async function main() {
     return;
   }
 
-  if (hasMaintainerConfirmation(context.reviews, context.author, context.repoOwner)) {
+  if (hasMaintainerConfirmation(context.reviews, context.comments, context.author, context.repoOwner)) {
     console.log(`test-quality-review passed: maintainer confirmation with ${marker}`);
     return;
   }
 
   console.error("test-quality-review required but missing.");
   console.error(`Changed files:\n${files.map((file) => `- ${file}`).join("\n")}`);
-  console.error(`Need maintainer GitHub review/comment whose body includes ${marker}.`);
-  console.error("Solo-maintainer repos may use the PR author's COMMENTED review; AI agents must not add this marker for the maintainer.");
+  console.error(`Need maintainer GitHub PR review or conversation comment whose body includes ${marker}.`);
+  console.error("Solo-maintainer repos may use the PR author's review/comment; AI agents must not add this marker for the maintainer.");
   process.exit(1);
 }
 
