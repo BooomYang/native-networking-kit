@@ -10,4 +10,4 @@
 | `ready-for-human` | `ready-for-human` | 需要 human implementation 或判断 |
 | `wontfix` | `wontfix` | 明确不处理 |
 
-当 skill 提到某个 role，例如 “apply the AFK-ready triage label”，使用本表对应的 GitHub label。
+当 skill 提到某个 role，例如 “apply the ready-for-agent triage label”，使用本表对应的 GitHub label。
