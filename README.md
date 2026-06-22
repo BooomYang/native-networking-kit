@@ -13,7 +13,7 @@ NativeNetKit 是 iOS、Android、HarmonyOS 三端原生高性能网络库的 Pha
 ./scripts/verify-local.sh
 ```
 
-`./scripts/verify-local.sh` 会依次运行 doctor、iOS、Android 和 Harmony 检查。当前已知结果是：iOS 已完成 Swift Package tests、Xcode host app build 和模拟器展示；Android 有 Gradle verification 入口，但 Android Studio/模拟器直接验收需要在具备 Android SDK 的本机环境中明确执行；Harmony 因本地 `hvigorw` 不可用保持 pending，不能写成已构建通过。
+`./scripts/verify-local.sh` 会依次运行 doctor、iOS、Android 和 Harmony 检查。当前已知结果是：iOS 已完成 Swift Package tests 和 Xcode host app build；Android 有 Gradle verification 入口，但 Android Studio/模拟器直接验收需要在具备 Android SDK 的本机环境中明确执行；Harmony 因本地 `hvigorw` 不可用保持 pending，不能写成已构建通过。
 
 ## 前置条件
 
@@ -30,7 +30,10 @@ NativeNetKit 是 iOS、Android、HarmonyOS 三端原生高性能网络库的 Pha
 | 命令 | 作用 | 当前状态 |
 | --- | --- | --- |
 | `./scripts/doctor.sh` | 打印发现到的 toolchain versions 和缺失工具 | 已可运行 |
-| `./scripts/verify-ios.sh` | 运行 Swift Package tests，并构建 Xcode host example app | 已通过 |
+| `./scripts/verify-ios-tests.sh` | 运行 iOS L1+L2 tests | 已可运行 |
+| `./scripts/verify-ios.sh` | 运行 iOS tests，并构建 Xcode host example app | 已通过 |
+| `./scripts/verify-ios-network-harness.sh` | 启动本地 mock server，并用真实 Swift host engine adapter 跑 loopback cases | Opt-in；iOS PR 前默认运行；不计作 iOS runtime L3 |
+| `./scripts/verify-ios-pr.sh` | 运行 iOS PR preflight：L1+L2、L4、Swift host loopback harness | 已可运行 |
 | `./scripts/verify-android.sh` | 运行 Gradle tests、lint、example assemble 和 local Maven publishing | 需 Android SDK；未做 Android Studio/模拟器直接验收时不要标记为 IDE 通过 |
 | `./scripts/verify-harmony.sh` | 若 Hvigor 可用则运行 HAR/HAP 验证，否则输出 pending | Pending：本地缺少 `hvigorw` |
 | `./scripts/verify-local.sh` | 依次运行 doctor、iOS、Android 和 Harmony 检查 | 可作为总入口；Android 依赖本机 SDK，Harmony 当前输出 pending |
@@ -74,6 +77,9 @@ native-networking-kit/
 
 - [Phase 1 简报](docs/phase-1-brief.md)
 - [验证矩阵](docs/verification-matrix.md)
+- [Review 指引](docs/review-guidelines.md)
+- [测试策略](docs/testing-strategy.md)
+- [Swift Host 网络验证 Harness](docs/ios-network-harness.md)
 - [AI 环境说明](docs/ai-environment.md)
 - [iOS 项目启动最小指南](docs/ios-project-bootstrap.md)
 - [ADR 0001: Phase 1 使用 native monorepo](docs/decisions/0001-monorepo-phase-1.md)
@@ -92,4 +98,4 @@ Phase 1 roadmap 来自本仓库外部的参考设计文档：
 
 ## 当前成熟度
 
-Phase 1 bootstrap 已具备 README、AGENTS.md、docs、scripts、platform project skeleton、examples 和 unit-test entrypoints。iOS 已完成本地 Swift/Xcode 验证和模拟器展示；Android verification 入口已定义，但 Android Studio/模拟器直接验收需要单独记录；Harmony 仍是 DevEco/Hvigor 待验证骨架。
+Phase 1 bootstrap 已具备 README、AGENTS.md、docs、scripts、platform project skeleton、examples 和 unit-test entrypoints。iOS 已完成本地 Swift/Xcode 构建验证和 Swift host loopback harness；iOS Simulator/device L3 仍是 pending。Android verification 入口已定义，但 Android Studio/模拟器直接验收需要单独记录；Harmony 仍是 DevEco/Hvigor 待验证骨架。
