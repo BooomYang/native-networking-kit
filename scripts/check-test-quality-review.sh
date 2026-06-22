@@ -209,7 +209,9 @@ async function deleteLabel(repo, prNumber, label) {
       method: "DELETE",
     });
   } catch (error) {
-    if (error.statusCode !== 404) throw error;
+    if (error.statusCode !== 404) {
+      console.warn(`[warning] could not remove label ${label}: ${error.message}`);
+    }
   }
 }
 
@@ -221,10 +223,10 @@ async function applyLabels(context, result) {
     ...result.signalHotZones,
   ]);
 
+  for (const label of [...attentionLabels, "hot-zone:api", "hot-zone:harness", "hot-zone:package", "hot-zone:docs"]) {
+    await deleteLabel(context.repo, context.prNumber, label);
+  }
   try {
-    for (const label of [...attentionLabels, "hot-zone:api", "hot-zone:harness", "hot-zone:package", "hot-zone:docs"]) {
-      await deleteLabel(context.repo, context.prNumber, label);
-    }
     for (const label of labels) {
       await ensureLabel(context.repo, label);
     }
@@ -236,6 +238,58 @@ async function applyLabels(context, result) {
     }
   } catch (error) {
     console.warn(`[warning] could not update labels: ${error.message}`);
+  }
+}
+
+function buildSummary(result) {
+  const lines = [
+    "<!-- native-netkit-review-attention-router -->",
+    "## Review attention router",
+    "",
+    `- Result: \`${result.attention}\``,
+    `- Highest severity: \`${result.highestSeverity}\``,
+    `- Changed hot zones: ${result.changedHotZones.map((item) => `\`${item}\``).join(", ") || "none"}`,
+    `- Signal hot zones: ${result.signalHotZones.map((item) => `\`${item}\``).join(", ") || "none"}`,
+    `- Review signals: ${result.signals.length}`,
+  ];
+  for (const signal of result.signals.slice(0, 20)) {
+    lines.push(`  - \`${signal.severity}\` ${signal.source}${signal.path ? `: \`${signal.path}\`` : ""}`);
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+function writeStepSummary(result) {
+  const path = process.env.GITHUB_STEP_SUMMARY;
+  if (!path) return;
+  try {
+    fs.appendFileSync(path, buildSummary(result));
+  } catch (error) {
+    console.warn(`[warning] could not write step summary: ${error.message}`);
+  }
+}
+
+async function postSummaryComment(context, result) {
+  if (!context.repo || !context.prNumber || process.env.REVIEW_ROUTER_SKIP_COMMENT === "1") return;
+  const marker = "<!-- native-netkit-review-attention-router -->";
+  const body = buildSummary(result);
+  const existing = context.issueComments.find((comment) => {
+    return (comment.body || "").includes(marker);
+  });
+
+  try {
+    if (existing) {
+      await requestJson(`/repos/${context.repo}/issues/comments/${existing.id}`, {
+        method: "PATCH",
+        body: { body },
+      });
+    } else {
+      await requestJson(`/repos/${context.repo}/issues/${context.prNumber}/comments`, {
+        method: "POST",
+        body: { body },
+      });
+    }
+  } catch (error) {
+    console.warn(`[warning] could not write summary comment: ${error.message}`);
   }
 }
 
@@ -294,7 +348,9 @@ async function main() {
 
   const result = classify(context);
   printSummary(result);
+  writeStepSummary(result);
   await applyLabels(context, result);
+  await postSummaryComment(context, result);
 }
 
 main().catch((error) => {
