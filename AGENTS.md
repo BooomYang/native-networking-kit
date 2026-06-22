@@ -1,87 +1,87 @@
 # AGENTS.md
 
-## Repository Expectations
+## 仓库预期
 
-- Purpose: This repository is the Phase 1 monorepo for native iOS, Android, and HarmonyOS networking libraries.
-- Non-goals: Do not add QUIC, HTTPDNS, IP racing, multi-network recovery, connection governance, full observability, KMP, or shared runtime code unless a later requirement loop explicitly asks for it.
+- 目标：本仓库是 iOS、Android、HarmonyOS 三端原生网络库的 Phase 1 monorepo。
+- 非目标：没有明确的后续 requirement loop 时，不要实现 QUIC、HTTPDNS、IP racing、multi-network recovery、connection governance、full observability、KMP 或 shared runtime code。
 
-## Repository Structure
+## 仓库结构
 
 ```text
 native-networking-kit/
-├── platforms/android/   # Android Gradle library, example app, and tests
-├── platforms/ios/       # Swift Package library, tests, Xcode host app, and host harnesses
-├── platforms/harmony/   # Harmony/ArkTS HAR skeleton, example shell, and pending validation notes
-├── docs/                # Phase 1 context, verification matrix, testing strategy, and decisions
-├── scripts/             # Stable commands for humans and Codex
-└── AGENTS.md            # Durable Codex guidance
+├── platforms/android/   # Android Gradle library、example app 和 tests
+├── platforms/ios/       # Swift Package library、tests、Xcode host app 和 host harnesses
+├── platforms/harmony/   # Harmony/ArkTS HAR skeleton、example shell 和 pending validation notes
+├── docs/                # Phase 1 context、verification matrix、testing strategy 和 decisions
+├── scripts/             # 供人类和 Codex 使用的稳定命令入口
+└── AGENTS.md            # 持久化 Codex guidance
 ```
 
-- Platform setup and IDE notes belong in each platform README.
-- Keep long strategy and validation details in `docs/`, not in this file.
+- 平台打开方式、IDE 验收和常见问题写在各平台 README。
+- 长测试策略、验证矩阵和设计意图放在 `docs/`，不要塞进本文件。
 
-## Commands
+## 命令
 
-- Doctor: `./scripts/doctor.sh`
-- iOS tests L1/L2: `./scripts/verify-ios-tests.sh`
-- iOS build L4: `./scripts/verify-ios.sh`
-- iOS PR preflight: `./scripts/verify-ios-pr.sh`
-- Swift host loopback harness: `./scripts/verify-ios-network-harness.sh`
-- Android verification: `./scripts/verify-android.sh`
-- Harmony verification: `./scripts/verify-harmony.sh`
-- Local verification: `./scripts/verify-local.sh`
+- Doctor：`./scripts/doctor.sh`
+- iOS tests L1/L2：`./scripts/verify-ios-tests.sh`
+- iOS build L4：`./scripts/verify-ios.sh`
+- iOS PR preflight：`./scripts/verify-ios-pr.sh`
+- Swift host loopback harness：`./scripts/verify-ios-network-harness.sh`
+- Android verification：`./scripts/verify-android.sh`
+- Harmony verification：`./scripts/verify-harmony.sh`
+- Local verification：`./scripts/verify-local.sh`
 
-## Project Conventions
+## 工程约定
 
-- Phase 1 shared behavior is aligned through naming, docs, tests, and verification; it is not shared runtime code.
-- Public concepts stay aligned across platforms: `NativeNetClient`, `NativeHttpEngine`, `NativeRequest`, `NativeResponse`, and `NativeNetworkError`.
-- Unit tests use injected or mockable boundaries and do not depend on public network access.
-- Avoid new production dependencies unless they are native-platform standard practice for the current layer.
+- Phase 1 的共享行为通过 naming、docs、tests 和 verification 对齐，不通过 shared runtime code 对齐。
+- 三端 public concepts 保持对齐：`NativeNetClient`、`NativeHttpEngine`、`NativeRequest`、`NativeResponse` 和 `NativeNetworkError`。
+- Unit tests 使用 injected 或 mockable boundary，不依赖 public network access。
+- 避免新增 production dependency，除非它是当前层的 native-platform standard practice。
 
-## Project Hot Zones
+## 风险热区
 
-- Public API semantics and error mapping for the aligned concepts above.
-- Platform engine boundaries, especially iOS `URLSessionNativeHttpEngine`, Android OkHttp adapter work, and Harmony adapter skeletons.
-- Test, harness, verification scripts, build manifests, package metadata, README, `AGENTS.md`, and truth-bearing docs.
-- Any code or docs that imply pending Android Studio, device, Simulator, DevEco, Hvigor, weak-network, performance, or reliability validation has passed.
+- Public API semantics 和 aligned concepts 的 error mapping。
+- Platform engine boundary，尤其是 iOS `URLSessionNativeHttpEngine`、Android OkHttp adapter work 和 Harmony adapter skeleton。
+- Tests、harness、verification scripts、build manifests、package metadata、README、`AGENTS.md` 和 truth-bearing docs。
+- 任何暗示 pending Android Studio、device、Simulator、DevEco、Hvigor、weak-network、performance 或 reliability validation 已通过的代码或文档。
 
-## Verification
+## 验证
 
-- Start with the smallest relevant script for the changed platform or layer.
-- iOS PR work defaults to `./scripts/verify-ios-pr.sh`.
-- `./scripts/verify-local.sh` is the stable local aggregate; it does not run the Swift host loopback harness.
-- If a toolchain is missing, report the exact missing tool and residual risk. Never mark pending validation as passed.
-- Testing layers and intent-comment rules live in `docs/testing-strategy.md`; current platform status lives in `docs/verification-matrix.md`.
+- 从受影响平台或层级的最小相关脚本开始验证。
+- iOS PR work 默认运行 `./scripts/verify-ios-pr.sh`。
+- `./scripts/verify-local.sh` 是稳定 local aggregate，不运行 Swift host loopback harness。
+- 如果 toolchain 缺失，要报告具体缺失工具和 residual risk。不要把 pending validation 写成 passed。
+- 测试分层和验证意图注释规则见 `docs/testing-strategy.md`；当前平台状态见 `docs/verification-matrix.md`。
 
-## Review Guidelines
+## Review 指引
 
-- Review behavior regressions before style.
-- Check changed behavior has useful tests at the lowest effective layer.
-- Treat hot-zone changes as requiring explicit validation evidence or a clear residual-risk note.
-- For platform-specific changes, confirm unchanged platforms are still described truthfully and conceptually aligned.
+- 先 review behavior regression，再看 style。
+- 检查 changed behavior 是否有位于最低有效层级的有价值测试。
+- Hot-zone changes 需要明确 validation evidence，或清楚说明 residual risk。
+- 对 platform-specific changes，即使不修改其他平台，也要确认未修改平台的描述仍然真实且 conceptually aligned。
 
-## Security And Secrets
+## 安全与 Secrets
 
-- Do not commit local caches, credentials, generated packages, or machine state; keep tool output in `.tmp/` where scripts already do so.
-- Do not add internal-company dependencies or private infrastructure assumptions to the library.
-- Public-network behavior belongs in examples or opt-in harnesses, not unit tests.
+- 不要提交 local caches、credentials、generated packages 或 machine state；脚本输出优先保留在 `.tmp/`。
+- 不要把 internal-company dependencies 或 private infrastructure assumptions 放进 library。
+- Public-network behavior 属于 examples 或 opt-in harnesses，不属于 unit tests。
 
-## Do Not
+## 禁止事项
 
-- Do not run destructive commands without explicit approval.
-- Do not rewrite unrelated platform code for narrow tasks.
-- Do not weaken verification scripts or tests to make a run pass.
-- Do not add review router workflows, GitHub state parsers, attention labels, or merge automation in this clean harness foundation.
-- Do not claim Harmony HAR/HAP, Android IDE/device, or iOS Simulator/device runtime validation passed unless it was actually run.
+- 未明确批准时，不要运行 destructive commands。
+- 窄范围任务不要重写无关 platform code。
+- 不要削弱 verification scripts 或 tests 来让命令通过。
+- 本轮 clean harness foundation 不新增 review router workflows、GitHub state parsers、attention labels 或 merge automation。
+- 未真实执行前，不要声称 Harmony HAR/HAP、Android IDE/device 或 iOS Simulator/device runtime validation 已通过。
 
-## Guidance Maintenance
+## Guidance 维护
 
-- Add guidance only when it is durable, project-wide, and likely to prevent future mistakes.
-- Link canonical docs instead of copying long process text into `AGENTS.md`.
-- Use nested `AGENTS.md` only when a subtree gains stable, distinct rules.
+- 只有 durable、project-wide 且可能影响未来 agent work 的规则，才加入 `AGENTS.md`。
+- 长流程和细策略链接到 canonical docs，不复制进 `AGENTS.md`。
+- 只有当子目录出现稳定且不同的本地规则时，才新增 nested `AGENTS.md`。
 
-## Git And Delivery
+## Git 与交付
 
-- Git commit message, PR title, PR description, GitHub comment, review text, and delivery summary default to Chinese.
-- Branch names, commands, file paths, code identifiers, product names, and necessary technical terms stay in English or ASCII.
-- Commit messages use a short verb-object form, such as `补充 iOS harness 分层`.
+- Git commit message、PR title、PR description、GitHub comment、review text 和 delivery summary 默认中文。
+- Branch names、commands、file paths、code identifiers、product names 和必要 technical terms 保持 English 或 ASCII。
+- Commit message 使用简短动宾结构，例如：`补充 iOS harness 分层`。
