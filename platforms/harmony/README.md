@@ -45,6 +45,8 @@ hvigorw assembleHap
 
 如果缺少 `hvigorw`，脚本会输出 pending 信息。pending 是当前 harness 的真实状态，不应改写成 passed。
 
+当前 Harmony L1/L2/L3/L5 仍是 target/pending。只有在 DevEco/Hvigor toolchain 可用并真实运行后，才能更新对应验证状态。
+
 ## 后续验收条件
 
 在具备 DevEco/Hvigor 环境后，至少需要确认：

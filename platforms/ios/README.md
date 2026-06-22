@@ -34,11 +34,19 @@ platforms/ios/
 
 该脚本会：
 
-- 运行 `platforms/ios` Swift Package tests；
+- 运行 `platforms/ios` Swift Package tests，覆盖 L1 client contract 和 L2 engine adapter unit tests；
 - 构建 `NativeNetKitExample.xcodeproj`；
 - 将 SwiftPM、Xcode package cache 和 DerivedData 写入 `.tmp/`。
 
 iOS unit tests 使用 injected mock engine，不执行 real network I/O。Example app 只有在用户点击 GET 时才会访问输入的真实 URL。
+
+iOS PR 前默认运行更强预检：
+
+```bash
+./scripts/verify-ios-pr.sh
+```
+
+该脚本会运行 `./scripts/verify-ios.sh`，再运行 Swift host loopback integration harness。host harness 使用真实 `URLSessionNativeHttpEngine` 访问本机 `127.0.0.1` mock server，但它运行在 Swift host/macOS process 中，不等于 iOS Simulator/device L3。
 
 ## 常见问题
 
