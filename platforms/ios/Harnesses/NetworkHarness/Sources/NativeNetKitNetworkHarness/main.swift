@@ -29,7 +29,7 @@ struct NativeNetKitNetworkHarness {
         try await verifyClosedConnection(client: client, baseURL: baseURL)
         try await verifyUnusedPort(unusedPort: unusedPort)
 
-        print("NativeNetKit Swift host loopback integration harness passed")
+        print("NativeNetKit Swift host loopback check passed")
     }
 
     private static func verifySuccessResponse(client: NativeNetClient, baseURL: URL) async throws {

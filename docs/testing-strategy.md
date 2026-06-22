@@ -14,7 +14,7 @@
 | L6 | Weak network | weak network 条件下的行为 | 后续扩展 |
 | L7 | Perf/leak/reliability | latency、memory、leak、stability | 后续扩展 |
 
-Swift host loopback integration harness 是独立的 host integration check：它用真实 `URLSessionNativeHttpEngine` 访问本机 `127.0.0.1` mock server，但运行在 Swift host/macOS process 中，不等于 iOS Simulator/device L3。
+Swift host loopback check 是独立的 host integration check：它用真实 `URLSessionNativeHttpEngine` 访问本机 `127.0.0.1` mock server，但运行在 Swift host/macOS process 中，不等于 iOS Simulator/device L3。
 
 ## 默认选择
 

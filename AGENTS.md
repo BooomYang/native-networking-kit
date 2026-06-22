@@ -26,7 +26,7 @@ native-networking-kit/
 - iOS tests L1/L2：`./scripts/verify-ios-tests.sh`
 - iOS build L4：`./scripts/verify-ios.sh`
 - iOS PR preflight：`./scripts/verify-ios-pr.sh`
-- Swift host loopback harness：`./scripts/verify-ios-network-harness.sh`
+- Swift host loopback check：`./scripts/verify-ios-network-harness.sh`
 - Android verification：`./scripts/verify-android.sh`
 - Harmony verification：`./scripts/verify-harmony.sh`
 - Local verification：`./scripts/verify-local.sh`
@@ -49,7 +49,7 @@ native-networking-kit/
 
 - 从受影响平台或层级的最小相关脚本开始验证。
 - iOS PR work 默认运行 `./scripts/verify-ios-pr.sh`。
-- `./scripts/verify-local.sh` 是稳定 local aggregate，不运行 Swift host loopback harness。
+- `./scripts/verify-local.sh` 是稳定 local aggregate，不运行 Swift host loopback check。
 - 如果 toolchain 缺失，要报告具体缺失工具和 residual risk。不要把 pending validation 写成 passed。
 - 测试分层和验证意图注释规则见 `docs/testing-strategy.md`；当前平台状态见 `docs/verification-matrix.md`。
 
@@ -79,6 +79,20 @@ native-networking-kit/
 - 只有 durable、project-wide 且可能影响未来 agent work 的规则，才加入 `AGENTS.md`。
 - 长流程和细策略链接到 canonical docs，不复制进 `AGENTS.md`。
 - 只有当子目录出现稳定且不同的本地规则时，才新增 nested `AGENTS.md`。
+
+## Agent skills
+
+### Issue tracker
+
+Issues 和 PRDs 使用 GitHub Issues。见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+Triage label vocabulary 先采用默认五角色映射。见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+本 repo 是 single-context；术语表在 `CONTEXT.md`，ADR-style decisions 在 `docs/decisions/`。见 `docs/agents/domain.md`。
 
 ## Git 与交付
 

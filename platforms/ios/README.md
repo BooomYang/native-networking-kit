@@ -46,7 +46,7 @@ iOS PR 前默认运行更强预检：
 ./scripts/verify-ios-pr.sh
 ```
 
-该脚本会运行 `./scripts/verify-ios.sh`，再运行 Swift host loopback integration harness。host harness 使用真实 `URLSessionNativeHttpEngine` 访问本机 `127.0.0.1` mock server，但它运行在 Swift host/macOS process 中，不等于 iOS Simulator/device L3。
+该脚本会运行 `./scripts/verify-ios.sh`，再运行 Swift host loopback check。该 check 使用真实 `URLSessionNativeHttpEngine` 访问本机 `127.0.0.1` mock server，但它运行在 Swift host/macOS process 中，不等于 iOS Simulator/device L3。
 
 ## 常见问题
 
