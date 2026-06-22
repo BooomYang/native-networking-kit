@@ -3,6 +3,8 @@ name: Review attention router
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
   pull_request_review:
     types: [submitted, edited, dismissed]
   issue_comment:
@@ -25,3 +27,4 @@ jobs:
         run: ./scripts/check-test-quality-review.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVIEW_ROUTER_WRITE_OUTPUT: ${{ github.event_name == 'pull_request_target' || github.event_name == 'issue_comment' }}

@@ -216,7 +216,7 @@ async function deleteLabel(repo, prNumber, label) {
 }
 
 async function applyLabels(context, result) {
-  if (!context.repo || !context.prNumber || process.env.REVIEW_ROUTER_SKIP_LABELS === "1") return;
+  if (!context.repo || !context.prNumber || process.env.REVIEW_ROUTER_SKIP_LABELS === "1" || process.env.REVIEW_ROUTER_WRITE_OUTPUT !== "true") return;
   const labels = unique([
     result.attention,
     ...result.changedHotZones,
@@ -269,7 +269,7 @@ function writeStepSummary(result) {
 }
 
 async function postSummaryComment(context, result) {
-  if (!context.repo || !context.prNumber || process.env.REVIEW_ROUTER_SKIP_COMMENT === "1") return;
+  if (!context.repo || !context.prNumber || process.env.REVIEW_ROUTER_SKIP_COMMENT === "1" || process.env.REVIEW_ROUTER_WRITE_OUTPUT !== "true") return;
   const marker = "<!-- native-netkit-review-attention-router -->";
   const body = buildSummary(result);
   const existing = context.issueComments.find((comment) => {

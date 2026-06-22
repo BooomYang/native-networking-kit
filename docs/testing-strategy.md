@@ -59,4 +59,4 @@ PR 改动测试、harness、verification/build scripts、workflow、build/packag
 | `attention:ai-fixable` | 有低风险 review 建议，通常可让 AI 自行修 | AI 先修，维护者不必立即介入 |
 | `attention:human` | P0/P1 且触碰 project hot zone | 高亮给维护者，先看风险再决定 |
 
-Router 默认返回成功，不因为缺少人工确认而 fail。它只负责把有限注意力推给真正敏感的 PR。
+Router 默认返回成功，不因为缺少人工确认而 fail。`pull_request` 事件只做只读分类和 Actions step summary；`pull_request_target` 或 `issue_comment` 事件才尝试写入 PR labels/comment。它只负责把有限注意力推给真正敏感的 PR。
