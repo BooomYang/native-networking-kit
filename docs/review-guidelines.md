@@ -41,13 +41,13 @@ Reviewer 不能只复述作者 packet；需要独立判断：
 - 测试层级是否过高或过低，是否存在低价值覆盖率测试。
 - 验证证据是否覆盖受影响平台；缺失工具链是否被如实标记为 pending/residual risk。
 - 文档、脚本和 workflow 是否会改变未来 agent 或 CI 的行为。
-- 测试质量确认通过时，必须确认 marker 来自维护者本人，且符合 `docs/testing-strategy.md` 的模板；AI agent 不能代替维护者确认。
+- `review-attention-router` 只做 attention routing；reviewer 仍需独立判断风险，不能把 label 当成完整审阅结论。
 
 ## Hot-zone escalation
 
 触碰 hot zones 时默认升级 review 严格度：
 
 - Ambiguous、cross-platform、harness、CI 或 package/build 变更先做只读探索和计划。
-- 测试、harness、verification scripts、测试策略或 `AGENTS.md` 变更必须触发维护者测试质量确认。
+- 测试、harness、verification scripts、测试策略或 `AGENTS.md` 变更必须触发 review attention routing；只有 P0/P1 且触碰 hot zone 时才默认升级给维护者。
 - 缺少 iOS Simulator、Android emulator/device、DevEco/Hvigor 或其他 toolchain 时，不阻塞所有工作，但必须在 PR packet 中写明未验证内容和 residual risk。
 - 无法判断平台风险时，请求熟悉该平台或该 hot zone 的 reviewer；不要用其他平台通过来替代当前平台验证。

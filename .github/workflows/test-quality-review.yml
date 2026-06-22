@@ -1,4 +1,4 @@
-name: Test quality review
+name: Review attention router
 
 on:
   pull_request:
@@ -10,18 +10,18 @@ on:
 
 permissions:
   contents: read
-  issues: read
+  issues: write
   pull-requests: read
 
 jobs:
-  test-quality-review:
-    name: test-quality-review
+  review-attention-router:
+    name: review-attention-router
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Require maintainer test quality confirmation
+      - name: Route review attention
         run: ./scripts/check-test-quality-review.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

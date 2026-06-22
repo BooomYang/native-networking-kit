@@ -12,14 +12,14 @@
 - 验证矩阵：`docs/verification-matrix.md`
 - 测试策略：`docs/testing-strategy.md`
 - Review 指引：`docs/review-guidelines.md`
-- iOS network harness：`docs/ios-network-harness.md`
+- Swift host loopback harness：`docs/ios-network-harness.md`
 - 平台说明：`platforms/ios/README.md`、`platforms/android/README.md`、`platforms/harmony/README.md`
 
 ## 核心命令
 
 - Doctor：`./scripts/doctor.sh`
 - iOS tests：`./scripts/verify-ios-tests.sh`
-- iOS network harness：`./scripts/verify-ios-network-harness.sh`
+- Swift host loopback harness：`./scripts/verify-ios-network-harness.sh`
 - iOS PR preflight：`./scripts/verify-ios-pr.sh`
 - iOS build：`./scripts/verify-ios.sh`
 - Android verification：`./scripts/verify-android.sh`
@@ -42,19 +42,20 @@
 - ambiguous、cross-platform、high-risk 或 harness 变更先做只读探索并制定计划。
 - 改动范围保持在一个 requirement loop 内。
 - 完成前运行对应层级 verification；无法运行时说明原因和 residual risk。
-- 测试、harness、verification 或 `AGENTS.md` 变更进入 PR 时，必须触发维护者测试质量确认；GitHub check 规则见 `docs/testing-strategy.md`。
+- 测试、harness、verification 或 `AGENTS.md` 变更进入 PR 时，必须触发 review attention routing；规则见 `docs/testing-strategy.md`。
 
 ## Review 入口
 
 - Code review 先读 `docs/review-guidelines.md`；测试、harness、verification 或测试策略相关 review 还要读 `docs/testing-strategy.md`。
 - Review 优先级：public behavior/API semantics、Phase 1 scope、测试与验证证据、dependency/toolchain/package 风险、三端 concept 对齐、文档状态真实性。
-- 测试质量审阅是附加硬门，不替代 general PR review。
+- Review attention routing 只负责把 P0/P1 + hot-zone 风险推给维护者，不替代 general PR review。
 
 ## Git workflow language
 
 - Git commit message、PR title、PR description、GitHub comment 和交付总结默认中文。
 - 分支名、命令、文件路径、代码标识符、外部产品名和必要技术术语保持 English/ASCII。
 - Commit message 用简短动宾结构，例如：`补充三端测试分层规则`。
+- 用户说“提 PR”时默认创建正式 PR；只有用户明确要求 draft/草稿时才创建 draft PR。
 
 ## 禁止事项
 
