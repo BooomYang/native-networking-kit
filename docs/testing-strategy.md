@@ -51,7 +51,7 @@ PR 改动测试、harness、verification/build scripts、workflow、build/packag
 
 ## Review Attention Routing
 
-`.github/workflows/test-quality-review.yml` 会运行 advisory router。它读取 changed files 和 Codex review/comment 中的 P0/P1/P2/P3 信号，然后更新 attention labels：
+`.github/workflows/test-quality-review.yml` 会运行 advisory router。它读取 changed files 和当前有效 Codex review/comment 中的 P0/P1/P2/P3 信号，然后更新 attention labels：
 
 | 结果 | 含义 | 默认处理 |
 | --- | --- | --- |
@@ -59,4 +59,4 @@ PR 改动测试、harness、verification/build scripts、workflow、build/packag
 | `attention:ai-fixable` | 有低风险 review 建议，通常可让 AI 自行修 | AI 先修，维护者不必立即介入 |
 | `attention:human` | P0/P1 且触碰 project hot zone | 高亮给维护者，先看风险再决定 |
 
-Router 默认返回成功，不因为缺少人工确认而 fail。`pull_request` 事件只做只读分类和 Actions step summary；`pull_request_target` 或 `issue_comment` 事件才尝试写入 PR labels/comment。它只负责把有限注意力推给真正敏感的 PR。
+Router 默认返回成功，不因为缺少人工确认而 fail。它只统计 active review threads，跳过 `DISMISSED` review 和自身生成的 summary comment，避免旧 P1/P2 结论反复污染结果。`pull_request` 事件只做只读分类和 Actions step summary；`pull_request_target` 或 `issue_comment` 事件才尝试写入 PR labels/comment。它只负责把有限注意力推给真正敏感的 PR。

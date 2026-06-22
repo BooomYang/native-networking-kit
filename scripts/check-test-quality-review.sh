@@ -6,6 +6,7 @@ const fs = require("fs");
 const https = require("https");
 
 const attentionLabels = ["attention:none", "attention:ai-fixable", "attention:human"];
+const routerSummaryMarker = "<!-- native-netkit-review-attention-router -->";
 const severityRank = { P0: 4, P1: 3, P2: 2, P3: 1 };
 const hotZonePatterns = [
   { label: "hot-zone:api", pattern: /(^|\/)(Sources|src\/main|oh_modules|native-netkit).*(NativeNet(Client|HttpEngine|Request|Response|NetworkError)|HttpEngine|Request|Response|NetworkError)/ },
@@ -49,9 +50,18 @@ function extractSeverity(text) {
   return normalized ? normalized[0] : null;
 }
 
+function isActiveReview(review) {
+  return (review.state || "").toUpperCase() !== "DISMISSED";
+}
+
+function isRouterSummaryComment(comment) {
+  const body = comment.body || "";
+  return body.includes(routerSummaryMarker) || /^## Review attention router\b/m.test(body);
+}
+
 function collectSignals(context) {
   const items = [
-    ...context.reviews.map((review) => ({
+    ...context.reviews.filter(isActiveReview).map((review) => ({
       source: "review",
       author: review.user && review.user.login,
       body: review.body || "",
@@ -63,7 +73,7 @@ function collectSignals(context) {
       body: comment.body || "",
       path: comment.path || "",
     })),
-    ...context.issueComments.map((comment) => ({
+    ...context.issueComments.filter((comment) => !isRouterSummaryComment(comment)).map((comment) => ({
       source: "issue-comment",
       author: comment.user && comment.user.login,
       body: comment.body || "",
@@ -166,6 +176,55 @@ function requestJson(path, options = {}) {
   });
 }
 
+function requestGraphql(query, variables) {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    throw new Error("GITHUB_TOKEN is required in PR context");
+  }
+
+  const body = JSON.stringify({ query, variables });
+  const requestOptions = {
+    hostname: "api.github.com",
+    path: "/graphql",
+    method: "POST",
+    headers: {
+      "Accept": "application/vnd.github+json",
+      "Authorization": `Bearer ${token}`,
+      "User-Agent": "native-networking-kit-review-attention-router",
+      "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(body),
+    },
+  };
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(requestOptions, (res) => {
+      let responseBody = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => {
+        responseBody += chunk;
+      });
+      res.on("end", () => {
+        const parsed = responseBody ? JSON.parse(responseBody) : null;
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          const error = new Error(`GitHub GraphQL ${res.statusCode}: ${responseBody}`);
+          error.statusCode = res.statusCode;
+          error.response = parsed;
+          reject(error);
+          return;
+        }
+        if (parsed && parsed.errors) {
+          reject(new Error(`GitHub GraphQL errors: ${JSON.stringify(parsed.errors)}`));
+          return;
+        }
+        resolve(parsed ? parsed.data : null);
+      });
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 async function fetchPaged(pathPrefix) {
   const out = [];
   for (let page = 1; page <= 20; page += 1) {
@@ -175,6 +234,56 @@ async function fetchPaged(pathPrefix) {
     if (pageItems.length < 100) break;
   }
   return out;
+}
+
+async function fetchActiveReviewThreadComments(repo, prNumber) {
+  const [owner, name] = repo.split("/");
+  const query = `
+    query($owner: String!, $name: String!, $number: Int!, $after: String) {
+      repository(owner: $owner, name: $name) {
+        pullRequest(number: $number) {
+          reviewThreads(first: 100, after: $after) {
+            nodes {
+              isResolved
+              isOutdated
+              comments(first: 100) {
+                nodes {
+                  body
+                  path
+                  author {
+                    login
+                  }
+                }
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      }
+    }
+  `;
+  const comments = [];
+  let after = null;
+  for (let page = 1; page <= 20; page += 1) {
+    const data = await requestGraphql(query, { owner, name, number: prNumber, after });
+    const threads = data.repository.pullRequest.reviewThreads;
+    for (const thread of threads.nodes) {
+      if (thread.isResolved || thread.isOutdated) continue;
+      for (const comment of thread.comments.nodes) {
+        comments.push({
+          body: comment.body || "",
+          path: comment.path || "",
+          user: comment.author ? { login: comment.author.login } : null,
+        });
+      }
+    }
+    if (!threads.pageInfo.hasNextPage) break;
+    after = threads.pageInfo.endCursor;
+  }
+  return comments;
 }
 
 async function ensureLabel(repo, label) {
@@ -243,7 +352,7 @@ async function applyLabels(context, result) {
 
 function buildSummary(result) {
   const lines = [
-    "<!-- native-netkit-review-attention-router -->",
+    routerSummaryMarker,
     "## Review attention router",
     "",
     `- Result: \`${result.attention}\``,
@@ -270,10 +379,9 @@ function writeStepSummary(result) {
 
 async function postSummaryComment(context, result) {
   if (!context.repo || !context.prNumber || process.env.REVIEW_ROUTER_SKIP_COMMENT === "1" || process.env.REVIEW_ROUTER_WRITE_OUTPUT !== "true") return;
-  const marker = "<!-- native-netkit-review-attention-router -->";
   const body = buildSummary(result);
   const existing = context.issueComments.find((comment) => {
-    return (comment.body || "").includes(marker);
+    return isRouterSummaryComment(comment);
   });
 
   try {
@@ -318,12 +426,19 @@ async function loadContext() {
 
   const repo = process.env.GITHUB_REPOSITORY;
   const prNumber = pullRequest ? pullRequest.number : issue.number;
+  let reviewComments;
+  try {
+    reviewComments = await fetchActiveReviewThreadComments(repo, prNumber);
+  } catch (error) {
+    console.warn(`[warning] could not fetch active review threads, falling back to REST comments: ${error.message}`);
+    reviewComments = await fetchPaged(`/repos/${repo}/pulls/${prNumber}/comments`);
+  }
   return {
     repo,
     prNumber,
     files: (await fetchPaged(`/repos/${repo}/pulls/${prNumber}/files`)).map((file) => file.filename),
     reviews: await fetchPaged(`/repos/${repo}/pulls/${prNumber}/reviews`),
-    reviewComments: await fetchPaged(`/repos/${repo}/pulls/${prNumber}/comments`),
+    reviewComments,
     issueComments: await fetchPaged(`/repos/${repo}/issues/${prNumber}/comments`),
   };
 }

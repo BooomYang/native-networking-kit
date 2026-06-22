@@ -10,15 +10,15 @@ on:
   issue_comment:
     types: [created, edited, deleted]
 
-permissions:
-  contents: read
-  issues: write
-  pull-requests: read
-
 jobs:
-  review-attention-router:
+  review-attention-router-readonly:
     name: review-attention-router
+    if: github.event_name == 'pull_request' || github.event_name == 'pull_request_review'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,4 +27,22 @@ jobs:
         run: ./scripts/check-test-quality-review.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REVIEW_ROUTER_WRITE_OUTPUT: ${{ github.event_name == 'pull_request_target' || github.event_name == 'issue_comment' }}
+          REVIEW_ROUTER_WRITE_OUTPUT: "false"
+
+  review-attention-router-write:
+    name: review-attention-router-write
+    if: github.event_name == 'pull_request_target' || github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Route review attention
+        run: ./scripts/check-test-quality-review.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVIEW_ROUTER_WRITE_OUTPUT: "true"
