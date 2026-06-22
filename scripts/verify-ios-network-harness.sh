@@ -60,7 +60,7 @@ if [[ -z "${PORT}" || -z "${UNUSED_PORT}" ]]; then
   exit 1
 fi
 
-echo "NativeNetKit Swift host loopback integration harness"
+echo "NativeNetKit Swift host loopback check"
 echo "Mock server: http://127.0.0.1:${PORT}"
 
 CLANG_MODULE_CACHE_PATH="${SWIFT_TMP_DIR}/module-cache" \
