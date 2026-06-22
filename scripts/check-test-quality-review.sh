@@ -59,6 +59,10 @@ function isRouterSummaryComment(comment) {
   return body.includes(routerSummaryMarker) || /^## Review attention router\b/m.test(body);
 }
 
+function isActiveReviewComment(comment) {
+  return (comment.reviewState || "").toUpperCase() !== "DISMISSED";
+}
+
 function collectSignals(context) {
   const items = [
     ...context.reviews.filter(isActiveReview).map((review) => ({
@@ -67,7 +71,7 @@ function collectSignals(context) {
       body: review.body || "",
       path: review.path || "",
     })),
-    ...context.reviewComments.map((comment) => ({
+    ...context.reviewComments.filter(isActiveReviewComment).map((comment) => ({
       source: "review-comment",
       author: comment.user && comment.user.login,
       body: comment.body || "",
@@ -253,6 +257,9 @@ async function fetchActiveReviewThreadComments(repo, prNumber) {
                   author {
                     login
                   }
+                  pullRequestReview {
+                    state
+                  }
                 }
               }
             }
@@ -277,6 +284,7 @@ async function fetchActiveReviewThreadComments(repo, prNumber) {
           body: comment.body || "",
           path: comment.path || "",
           user: comment.author ? { login: comment.author.login } : null,
+          reviewState: comment.pullRequestReview ? comment.pullRequestReview.state : "",
         });
       }
     }
@@ -284,6 +292,18 @@ async function fetchActiveReviewThreadComments(repo, prNumber) {
     after = threads.pageInfo.endCursor;
   }
   return comments;
+}
+
+function annotateReviewCommentStates(comments, reviews) {
+  const reviewStatesById = new Map(
+    reviews
+      .filter((review) => review.id !== undefined && review.id !== null)
+      .map((review) => [String(review.id), review.state || ""])
+  );
+  return comments.map((comment) => ({
+    ...comment,
+    reviewState: reviewStatesById.get(String(comment.pull_request_review_id)) || "",
+  }));
 }
 
 async function ensureLabel(repo, label) {
@@ -426,18 +446,22 @@ async function loadContext() {
 
   const repo = process.env.GITHUB_REPOSITORY;
   const prNumber = pullRequest ? pullRequest.number : issue.number;
+  const reviews = await fetchPaged(`/repos/${repo}/pulls/${prNumber}/reviews`);
   let reviewComments;
   try {
     reviewComments = await fetchActiveReviewThreadComments(repo, prNumber);
   } catch (error) {
     console.warn(`[warning] could not fetch active review threads, falling back to REST comments: ${error.message}`);
-    reviewComments = await fetchPaged(`/repos/${repo}/pulls/${prNumber}/comments`);
+    reviewComments = annotateReviewCommentStates(
+      await fetchPaged(`/repos/${repo}/pulls/${prNumber}/comments`),
+      reviews
+    );
   }
   return {
     repo,
     prNumber,
     files: (await fetchPaged(`/repos/${repo}/pulls/${prNumber}/files`)).map((file) => file.filename),
-    reviews: await fetchPaged(`/repos/${repo}/pulls/${prNumber}/reviews`),
+    reviews,
     reviewComments,
     issueComments: await fetchPaged(`/repos/${repo}/issues/${prNumber}/comments`),
   };
