@@ -1,8 +1,8 @@
 # 测试策略
 
-本文定义三端通用测试分层、测试用例质量标准和 PR 独立审阅规则。目标是支撑长期 AI coding，而不是追覆盖率。
+本文定义三端通用测试分层、测试用例质量标准和 PR 测试质量确认规则。目标是支撑长期 AI coding，而不是追覆盖率。
 
-通用 PR review 优先级、project hot zones 和作者 packet 见 [`docs/review-guidelines.md`](review-guidelines.md)。`TEST_QUALITY_REVIEWED` 是测试、harness、verification 相关 PR 的附加硬门，不替代 general PR review。
+通用 PR review 优先级、project hot zones 和作者 packet 见 [`docs/review-guidelines.md`](review-guidelines.md)。`TEST_QUALITY_CONFIRMED` 是测试、harness、verification 相关 PR 的附加硬门，不替代 general PR review。
 
 ## 测试分层
 
@@ -49,12 +49,12 @@ PR 改动测试、harness、verification/build scripts、workflow、build/packag
 - 跑过哪些命令，哪些未跑。
 - residual risk。
 
-## 独立测试质量审阅
+## 测试质量确认
 
-相关 PR 必须有非作者 GitHub review，且 review body 包含：
+相关 PR 必须由维护者本人在 GitHub review/comment 中显式确认，且 body 包含：
 
 ```text
-TEST_QUALITY_REVIEWED
+TEST_QUALITY_CONFIRMED
 
 - 测试意图清晰：是/否
 - 层级选择合理：是/否
@@ -62,5 +62,7 @@ TEST_QUALITY_REVIEWED
 - 必要 L1/L2/L3/L4 验证证据充分：是/否
 - residual risk 可接受：是/否
 ```
+
+单人维护阶段不强制非作者 approve；PR 作者可以通过 GitHub `COMMENTED` review 完成本人确认。但 AI agent 不能代替维护者添加该 marker，也不能把未确认写成已确认。
 
 `.github/workflows/test-quality-review.yml` 会检查 marker。这是测试/验证相关 PR 的附加硬门：general PR review 仍按 [`docs/review-guidelines.md`](review-guidelines.md) 执行。要真正阻止 merge，repo owner 还必须在 GitHub branch protection 中把 `test-quality-review` 设为 required status check。

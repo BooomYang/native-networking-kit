@@ -5,7 +5,7 @@ node <<'NODE'
 const fs = require("fs");
 const https = require("https");
 
-const marker = "TEST_QUALITY_REVIEWED";
+const marker = "TEST_QUALITY_CONFIRMED";
 const relevantPatterns = [
   /(^|\/)(Tests|tests|test|androidTest|ohosTest|Harnesses)\//,
   /(^|\/)[^/]*(Test|Tests)\.[^/]+$/,
@@ -48,11 +48,21 @@ function latestReviewByUser(reviews) {
   return [...latest.values()];
 }
 
-function hasIndependentApproval(reviews, author) {
+function isMaintainerConfirmation(review, author, repoOwner) {
+  const login = review.user && review.user.login;
+  const body = review.body || "";
+  const state = review.state || "";
+  return (
+    login &&
+    (login === author || login === repoOwner) &&
+    (state === "APPROVED" || state === "COMMENTED") &&
+    body.includes(marker)
+  );
+}
+
+function hasMaintainerConfirmation(reviews, author, repoOwner) {
   return latestReviewByUser(reviews).some((review) => {
-    const login = review.user && review.user.login;
-    const body = review.body || "";
-    return login && login !== author && review.state === "APPROVED" && body.includes(marker);
+    return isMaintainerConfirmation(review, author, repoOwner);
   });
 }
 
@@ -111,6 +121,7 @@ async function loadContext() {
   if (localFiles) {
     return {
       author: process.env.TEST_QUALITY_PR_AUTHOR || "author",
+      repoOwner: process.env.TEST_QUALITY_REPO_OWNER || process.env.TEST_QUALITY_PR_AUTHOR || "author",
       files: localFiles,
       reviews: JSON.parse(process.env.TEST_QUALITY_REVIEWS_JSON || "[]"),
     };
@@ -131,6 +142,7 @@ async function loadContext() {
   const prNumber = pullRequest.number;
   return {
     author: pullRequest.user.login,
+    repoOwner: repo.split("/")[0],
     files: (await fetchPaged(`/repos/${repo}/pulls/${prNumber}/files`)).map((file) => file.filename),
     reviews: await fetchPaged(`/repos/${repo}/pulls/${prNumber}/reviews`),
   };
@@ -149,14 +161,15 @@ async function main() {
     return;
   }
 
-  if (hasIndependentApproval(context.reviews, context.author)) {
-    console.log(`test-quality-review passed: independent approval with ${marker}`);
+  if (hasMaintainerConfirmation(context.reviews, context.author, context.repoOwner)) {
+    console.log(`test-quality-review passed: maintainer confirmation with ${marker}`);
     return;
   }
 
   console.error("test-quality-review required but missing.");
   console.error(`Changed files:\n${files.map((file) => `- ${file}`).join("\n")}`);
-  console.error(`Need non-author APPROVED review whose body includes ${marker}.`);
+  console.error(`Need maintainer GitHub review/comment whose body includes ${marker}.`);
+  console.error("Solo-maintainer repos may use the PR author's COMMENTED review; AI agents must not add this marker for the maintainer.");
   process.exit(1);
 }
 

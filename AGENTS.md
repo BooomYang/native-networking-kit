@@ -42,7 +42,7 @@
 - ambiguous、cross-platform、high-risk 或 harness 变更先做只读探索并制定计划。
 - 改动范围保持在一个 requirement loop 内。
 - 完成前运行对应层级 verification；无法运行时说明原因和 residual risk。
-- 测试、harness、verification 或 `AGENTS.md` 变更进入 PR 时，必须触发独立测试质量审阅；GitHub check 规则见 `docs/testing-strategy.md`。
+- 测试、harness、verification 或 `AGENTS.md` 变更进入 PR 时，必须触发维护者测试质量确认；GitHub check 规则见 `docs/testing-strategy.md`。
 
 ## Review 入口
 
