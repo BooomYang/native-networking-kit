@@ -80,6 +80,20 @@ native-networking-kit/
 - 长流程和细策略链接到 canonical docs，不复制进 `AGENTS.md`。
 - 只有当子目录出现稳定且不同的本地规则时，才新增 nested `AGENTS.md`。
 
+## Agent skills
+
+### Issue tracker
+
+Issues 和 PRDs 使用 GitHub Issues。见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+Triage label vocabulary 先采用默认五角色映射。见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+本 repo 是 single-context；术语表在 `CONTEXT.md`，ADR-style decisions 在 `docs/decisions/`。见 `docs/agents/domain.md`。
+
 ## Git 与交付
 
 - Git commit message、PR title、PR description、GitHub comment、review text 和 delivery summary 默认中文。
