@@ -38,6 +38,10 @@ _Avoid_: detached request, hidden background work, fire-and-forget request
 项目用来描述验证责任边界的层级语言，例如 client contract、engine adapter mapping、platform runtime、package/example build 和后续弱网或性能验证。它描述“验证在哪一层成立”，不等同于某一个脚本或单测文件。
 _Avoid_: all tests, passed everything, release readiness
 
+**candidate capability check**:
+对候选 agent、tool、plugin 或 MCP 能力做的实测评估，用来判断它能否补充现有 harness。它不等于正式 `verification layer` 通过，也不自动成为 canonical verification command。
+_Avoid_: official validation, required preflight, canonical check
+
 **Swift host loopback check**:
 运行在 macOS Swift host process 中的本地回环集成检查，使用真实 `URLSessionNativeHttpEngine` 和 `URLSession` 访问 `127.0.0.1` mock server。它验证少量真实 host transport boundary，不等于 iOS Simulator/device L3。
 _Avoid_: host loopback harness, iOS L3 harness, platform runtime harness

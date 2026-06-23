@@ -63,7 +63,7 @@ Harmony/ArkTS 的 Promise、TaskPool、worker、RCP callback 等语义先使用 
 
 ### iOS build-ios-apps capability check
 
-状态：candidate，留待后续专门 PR 实测。
+状态：candidate，已完成首轮本机实测；仍不作为 canonical verification command。
 
 目的：
 
@@ -76,7 +76,16 @@ Harmony/ArkTS 的 Promise、TaskPool、worker、RCP callback 等语义先使用 
 - 实测通过前，不写入 `docs/verification-matrix.md` 作为正式验证入口。
 - 即使 Simulator evidence 通过，也不等于 iOS device validation。
 
-建议检查项：
+本轮实测记录（2026-06-23）：
+
+- 对照基线：`./scripts/verify-ios-pr.sh` 通过，覆盖 iOS Swift Package tests、Xcode host app build 和 Swift host loopback check。
+- XcodeBuildMCP session defaults 使用 `NativeNetKitExample.xcodeproj`、`NativeNetKitExample` scheme、`iPhone 17` simulator、`com.aifirst.nativenetkit.example` bundle id 和 `.tmp/xcodebuildmcp-ios-example` DerivedData；未持久化 `.xcodebuildmcp/config.yaml`。
+- `build_run_sim` 通过，完成 build、install 和 launch，返回 app path、build log、runtime log 与 OS log。
+- `wait_for_ui` / `snapshot_ui` 能读取首屏 `NativeNetKit`、`https://example.com`、`GET` 和 `Ready`；未点击 `GET`，未触发 public network request。
+- `screenshot` 通过，生成本机临时截图。
+- runtime log 由 XcodeBuildMCP 写入 `~/Library/Developer/XcodeBuildMCP/workspaces/.../logs/com.aifirst.nativenetkit.example_*.log`；相较 shell scripts，它能补充 launch 后 runtime log 和 UI evidence，但仍不能替代 scripts 的 canonical pass/fail 语义。
+
+后续升级检查项：
 
 - 发现 Xcode project、scheme 和 simulator。
 - 配置 XcodeBuildMCP session defaults。
