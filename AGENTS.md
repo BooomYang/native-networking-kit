@@ -27,7 +27,9 @@ native-networking-kit/
 - iOS build L4：`./scripts/verify-ios.sh`
 - iOS PR preflight：`./scripts/verify-ios-pr.sh`
 - Swift host loopback check：`./scripts/verify-ios-network-harness.sh`
-- Android verification：`./scripts/verify-android.sh`
+- Android library verification：`./scripts/verify-android-library.sh`
+- Android example verification：`./scripts/verify-android-example.sh`
+- Android aggregate verification：`./scripts/verify-android.sh`
 - Harmony verification：`./scripts/verify-harmony.sh`
 - Local verification：`./scripts/verify-local.sh`
 
@@ -51,6 +53,7 @@ native-networking-kit/
 
 - 从受影响平台或层级的最小相关脚本开始验证。
 - iOS PR work 默认运行 `./scripts/verify-ios-pr.sh`。
+- Android library/package changes 优先运行 `./scripts/verify-android-library.sh`；example 宿主集成变化优先运行 `./scripts/verify-android-example.sh`；Android aggregate 用 `./scripts/verify-android.sh`。
 - `./scripts/verify-local.sh` 是稳定 local aggregate，不运行 Swift host loopback check。
 - 如果 toolchain 缺失，要报告具体缺失工具和 residual risk。不要把 pending validation 写成 passed。
 - 测试分层和验证意图注释规则见 `docs/testing-strategy.md`；当前平台状态见 `docs/verification-matrix.md`。

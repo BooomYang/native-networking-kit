@@ -6,6 +6,8 @@ Android 平台是一个 Gradle root project，包含 library module、example ap
 
 ```text
 platforms/android/
+  build-logic/
+  gradle/libs.versions.toml
   settings.gradle.kts
   build.gradle.kts
   gradlew
@@ -15,6 +17,14 @@ platforms/android/
 
 - `:native-netkit`：Android library module，产物形态是 AAR/Maven publication。
 - `:example`：集成验证 app，通过 `implementation(project(":native-netkit"))` 引用 library。
+- `build-logic`：Gradle composite build，提供 Android library/application convention plugins。
+- `gradle/libs.versions.toml`：集中管理 Android Gradle Plugin、Kotlin、OkHttp 和 coroutines 版本。
+
+## 组件与宿主集成
+
+`:native-netkit` 是可独立开发、测试、lint 和发布的 Android 网络库组件。它应用 `native-netkit.android.library` convention plugin，统一 `compileSdk`、`minSdk`、Java/Kotlin toolchain 等 Android library 基础配置；module 自身只保留 namespace、consumer ProGuard、publishing 和依赖声明。
+
+`:example` 是本地集成宿主壳。它应用 `native-netkit.android.application` convention plugin，并通过 `implementation(project(":native-netkit"))` 消费当前源码中的 library，用于 Android Studio、Gradle assemble 和后续 emulator/device harness 的快速验证。example 不承载 library 业务逻辑，也不代表发布产物消费验证。
 
 ## 打开方式
 
@@ -34,13 +44,33 @@ platforms/android
 ./scripts/verify-android.sh
 ```
 
-该脚本在 Android SDK 可用时会运行：
+该聚合脚本在 Android SDK 可用时会运行：
 
 ```text
-test lint :example:assembleDebug publishToMavenLocal
+:native-netkit:test
+:native-netkit:lint
+:native-netkit:publishToMavenLocal
+:example:lint
+:example:assembleDebug
 ```
 
 脚本使用 `platforms/android/gradlew`，并把 Gradle user home、Android user state 和 Maven local output 重定向到 `.tmp/`。
+
+组件独立验证：
+
+```bash
+./scripts/verify-android-library.sh
+```
+
+该脚本只验证 `:native-netkit` 的 unit tests、lint 和 Maven local publication，不依赖 example。
+
+example 宿主集成验证：
+
+```bash
+./scripts/verify-android-example.sh
+```
+
+该脚本验证 `:example` 通过 `implementation(project(":native-netkit"))` 本地集成 library 后可以 lint 和 assemble debug。
 
 需要采集 Android platform runtime readiness evidence 时，先启动一个 emulator 或连接一个设备，再运行 opt-in 脚本：
 
@@ -53,7 +83,7 @@ test lint :example:assembleDebug publishToMavenLocal
 ## 当前验收边界
 
 - Unit tests 使用 injected mock engine，不执行 real network I/O。
-- 当前 Android L1/L4 入口由 `./scripts/verify-android.sh` 覆盖；L2 adapter stub、emulator/device L3 和 L5 仍是 target/pending。
+- 当前 Android L1/L4 入口由 `./scripts/verify-android-library.sh`、`./scripts/verify-android-example.sh` 和 `./scripts/verify-android.sh` 覆盖；L2 adapter stub、emulator/device L3 和 L5 仍是 target/pending。
 - `:example:assembleDebug` 只能证明 example app 可以构建，不等同于已经在 Android Studio 或模拟器中手动运行通过。
 - 如果当前机器缺少 Android SDK，`./scripts/verify-android.sh` 应明确失败并提示配置 `ANDROID_HOME` 或 `ANDROID_SDK_ROOT`，不能把该平台标记为 passed。
 

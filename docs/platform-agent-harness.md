@@ -29,7 +29,7 @@
 | module/API/engine boundary、OkHttp adapter ownership、dependency injection、`request lifecycle` ownership、public API semantics、error mapping 或测试边界变化 | `android-architecture` | 做 Android library 结构 fit check；不默认引入 Hilt、Room、ViewModel 或业务 App 分层。 |
 | coroutine execution、cancellation、timeout、dispatcher、callback-to-suspend adapter、Flow、shared mutable state 或并发测试调度 | `android-coroutines` | 用于实现和审查 coroutine 正确性；不替代 Gradle test execution。 |
 | 新增或修改 unit tests、后续 `androidTest`、fake/mock boundary、dispatcher/coroutine test rule、error mapping、cancellation、timeout 或 request lifecycle tests | `android-testing` | 用于写和审查测试代码；不用于执行测试命令。 |
-| Gradle Kotlin DSL、settings、module build files、wrapper、plugin/dependency 配置、publication、consumer rules、lint/test task、Android SDK 设置或 `./scripts/verify-android.sh` 的 Gradle invocation | `android-gradle-logic` | 用于减少 Gradle 和 Android library publishing 错误；不代表默认引入 `build-logic`、version catalog 或复杂多模块治理。 |
+| Gradle Kotlin DSL、settings、module build files、`build-logic`、version catalog、wrapper、plugin/dependency 配置、publication、consumer rules、lint/test task、Android SDK 设置或 Android verification scripts 的 Gradle invocation | `android-gradle-logic` | 用于减少 Gradle 和 Android library publishing 错误；本仓库当前已采用 `build-logic` convention plugins 和 `gradle/libs.versions.toml`，但不默认扩展到复杂多模块治理。 |
 
 ### Harmony / ArkTS
 
@@ -127,7 +127,8 @@ L5 升级条件：
 
 检查项：
 
-- 使用 `./scripts/verify-android.sh` 保持 Gradle tests、lint、example assemble 和 local Maven publishing 基线。
+- 使用 `./scripts/verify-android-library.sh` 保持 `:native-netkit` tests、lint 和 local Maven publishing 基线。
+- 使用 `./scripts/verify-android-example.sh` 保持 example 本地宿主集成 build 基线；需要完整 Android Gradle baseline 时使用 `./scripts/verify-android.sh`。
 - 使用 ADB 安装并启动 `:example`。
 - 用 `dumpsys window` 确认前台 app。
 - 用 `uiautomator dump` 采集可读 UI 信息，并确认初始 `Ready` 和 `GET` 可见。
