@@ -37,6 +37,7 @@ native-networking-kit/
 - 三端 public concepts 保持对齐：`NativeNetClient`、`NativeHttpEngine`、`NativeRequest`、`NativeResponse` 和 `NativeNetworkError`。
 - Unit tests 使用 injected 或 mockable boundary，不依赖 public network access。
 - 避免新增 production dependency，除非它是当前层的 native-platform standard practice。
+- 平台 skill 采纳范围、项目特定触发语义和不可用 fallback 见 `docs/platform-agent-harness.md`；触及 public API semantics、engine boundary、`request lifecycle`、测试或平台构建配置时，按该文档选择对应 skill。
 
 ## 风险热区
 
