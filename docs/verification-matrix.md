@@ -25,6 +25,21 @@
 | L6 Weak network | 后续扩展 | 后续扩展 | 后续扩展 |
 | L7 Perf/leak/reliability | 后续扩展 | 后续扩展 | 后续扩展 |
 
+## iOS 测试健康矩阵
+
+Android/Harmony 在补齐平台专属测试健康矩阵前，review 先按“三端测试层级”检查 pending gap；未真实验证前，不要把 pending 写成 covered。
+
+| 层级/检查 | Behavior intent / 行为意图 | Subject / 验证对象 | Network boundary / 网络边界 | Signal strength / 信号强度 | Determinism / 确定性 | Current status / 当前状态 | Gap / 缺口 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| L1 Client contract tests | 验证 `NativeNetClient` 转发 request，并透传 response/error | client contract | mock engine；不访问网络 | unit | 高；只依赖 Swift test runtime | covered：`./scripts/verify-ios-tests.sh` | 补更多 public client behavior 时按需增加 |
+| L2 Engine adapter unit tests | 验证 `NativeRequest` 到 `URLRequest`、HTTP response、非 HTTP response 和 `URLSession` error mapping | engine adapter | `URLProtocol` stub；不访问 public network | adapter unit | 高；依赖 Foundation URL loading stub | covered：`./scripts/verify-ios-tests.sh` | cancellation、timeout 等 public error semantics 待后续 requirement |
+| L3 Host loopback integration | 验证真实 `URLSessionNativeHttpEngine` 能访问 `127.0.0.1` mock server，并覆盖 success、delay、closed connection、unused port | host transport | host process + `127.0.0.1` loopback | host integration | 中；依赖本机 socket、Node mock server 和 Swift host process | covered：`./scripts/verify-ios-network-harness.sh` | 不覆盖 Simulator/device runtime |
+| L4 Package/example integration build | 验证 Swift Package library 和 Xcode host app 可集成构建 | package/example build | none；不验证网络行为 | build integration | 中；依赖 Xcode、SwiftPM 和 package cache | covered：`./scripts/verify-ios.sh` | 不覆盖 app launch 或 runtime behavior |
+| Platform runtime readiness check | 验证 Simulator app launch、UI snapshot、screenshot 和 runtime log 采集链路可用 | platform runtime tooling | none；未点击 `GET` | tooling readiness | 中低；依赖 Simulator、XcodeBuildMCP 和本机 runtime state | candidate：XcodeBuildMCP 首轮本机检查已完成 | 不计入 L5；不验证 networking behavior |
+| L5 Platform runtime validation | 验证 Simulator/device 中通过 `NativeNetClient` 发起 controlled network request，并用 UI/状态/log 证明 response/error 行为 | platform runtime | Simulator/device controlled endpoint | platform runtime | 中低；依赖 Simulator/device、mock server、UI automation 和 runtime logs | pending | 最高价值下一步：复用 `NativeNetKitExample` 补 controlled network request |
+| L6 Weak network | 验证弱网条件下的 public behavior | platform/runtime behavior | controlled endpoint + weak network | weak-network validation | 低；依赖网络条件控制和 runtime state | pending | L5 稳定后再补 |
+| L7 Perf/leak/reliability | 验证 latency、memory、leak、stability | runtime quality | 按专项设计 | perf/leak/reliability | 低；依赖 profiling 工具和长时间运行条件 | pending | 有明确性能或稳定性目标后再补 |
+
 ## 当前本地工具链
 
 | 工具 | 状态 |

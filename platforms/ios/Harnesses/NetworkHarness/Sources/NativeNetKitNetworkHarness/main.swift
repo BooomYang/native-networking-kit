@@ -33,6 +33,10 @@ struct NativeNetKitNetworkHarness {
     }
 
     private static func verifySuccessResponse(client: NativeNetClient, baseURL: URL) async throws {
+        // 验证意图：
+        // - 场景：host loopback server 返回成功响应。
+        // - 行为：`NativeNetClient` 应暴露 status、body 和 headers。
+        // - 风险：防止真实 engine adapter 丢失成功响应的 public response semantics。
         let response = try await client.get(try endpoint("/success", baseURL: baseURL))
 
         try expect(response.statusCode == 200, "success status code should be 200")
@@ -41,6 +45,10 @@ struct NativeNetKitNetworkHarness {
     }
 
     private static func verifyDelayedResponse(client: NativeNetClient, baseURL: URL) async throws {
+        // 验证意图：
+        // - 场景：host loopback server 返回可控延迟响应。
+        // - 行为：`NativeNetClient` 应完成请求并暴露 elapsed time。
+        // - 风险：防止真实 transport 边界下延迟响应被误报为失败或丢失耗时信号。
         let response = try await client.get(try endpoint("/delay?ms=150", baseURL: baseURL))
 
         try expect(response.statusCode == 200, "delayed response status code should be 200")
@@ -49,6 +57,10 @@ struct NativeNetKitNetworkHarness {
     }
 
     private static func verifyClosedConnection(client: NativeNetClient, baseURL: URL) async throws {
+        // 验证意图：
+        // - 场景：host loopback server 在响应前关闭连接。
+        // - 行为：`NativeNetClient` 应抛出 `.transportFailure` 并保留 raw details。
+        // - 风险：防止真实 socket 断连被误分类或丢失诊断信息。
         do {
             _ = try await client.get(try endpoint("/close", baseURL: baseURL))
             throw HarnessFailure(description: "closed connection should throw NativeNetworkError")
@@ -59,6 +71,10 @@ struct NativeNetKitNetworkHarness {
     }
 
     private static func verifyUnusedPort(unusedPort: Int) async throws {
+        // 验证意图：
+        // - 场景：请求本机未监听端口。
+        // - 行为：`NativeNetClient` 应抛出 `.transportFailure` 并保留 raw details。
+        // - 风险：防止连接拒绝被误分类或丢失诊断信息。
         guard let url = URL(string: "http://127.0.0.1:\(unusedPort)/unused-port") else {
             throw HarnessFailure(description: "unused port URL could not be constructed")
         }

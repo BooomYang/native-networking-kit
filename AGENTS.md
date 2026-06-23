@@ -36,6 +36,7 @@ native-networking-kit/
 - Phase 1 的共享行为通过 naming、docs、tests 和 verification 对齐，不通过 shared runtime code 对齐。
 - 三端 public concepts 保持对齐：`NativeNetClient`、`NativeHttpEngine`、`NativeRequest`、`NativeResponse` 和 `NativeNetworkError`。
 - Unit tests 使用 injected 或 mockable boundary，不依赖 public network access。
+- 三端新增或修改 tests / harness scenarios 时，必须写精简中文“验证意图”注释，说明要保护的 public behavior 和回归风险，不描述实现步骤。
 - 避免新增 production dependency，除非它是当前层的 native-platform standard practice。
 - 平台 skill 采纳范围、项目特定触发语义和不可用 fallback 见 `docs/platform-agent-harness.md`；触及 public API semantics、engine boundary、`request lifecycle`、测试或平台构建配置时，按该文档选择对应 skill。
 
@@ -58,6 +59,9 @@ native-networking-kit/
 
 - 先 review behavior regression，再看 style。
 - 检查 changed behavior 是否有位于最低有效层级的有价值测试。
+- Review 涉及 `NativeNetClient`、`NativeRequest`、`NativeResponse`、`NativeNetworkError`、`NativeHttpEngine`、engine adapter、`request lifecycle`、tests、harness 或 verification scripts 的变更时，按 `docs/testing-strategy.md` 的 L1-L7 和 `docs/verification-matrix.md` 的测试健康矩阵检查测试缺口。
+- 命中上述热区时，review 结论应明确说明命中层级、已有验证、测试缺口或无需补测原因。
+- Review 新增或修改 tests / harness scenarios 时，检查是否有精简验证意图注释，且注释描述 behavior intent 而不是实现步骤。
 - Hot-zone changes 需要明确 validation evidence，或清楚说明 residual risk。
 - 对 platform-specific changes，即使不修改其他平台，也要确认未修改平台的描述仍然真实且 conceptually aligned。
 
