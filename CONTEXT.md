@@ -27,6 +27,10 @@ _Avoid_: optimization engine, governance engine, full networking stack
 把 `NativeHttpEngine` 作为可替换依赖传入 client 的设计边界。它让 unit tests 使用 mock engine，也让 examples 或实际集成使用平台默认 engine。
 _Avoid_: global engine, hidden singleton, public network unit test seam
 
+**request lifecycle**:
+一次 `NativeNetClient` request 从调用方发起到返回 response、error 或 cancellation 的可观察生命周期。它应归属于调用方的 async、coroutine 或 promise 生命周期，而不是脱离调用方继续运行的后台工作。
+_Avoid_: detached request, hidden background work, fire-and-forget request
+
 **Phase 1**:
 本 repo 当前阶段的 bootstrap 范围，目标是建立三端原生工程底座、对齐 public concepts、保留最薄 engine adapter 和基础验证入口。它不包含 QUIC、HTTPDNS、IP racing、multi-network recovery、connection governance、full observability 或 KMP。
 

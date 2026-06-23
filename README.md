@@ -80,6 +80,7 @@ native-networking-kit/
 - [测试策略](docs/testing-strategy.md)
 - [Review Attention Routing 方向](docs/review-attention-routing.md)
 - [AI 环境说明](docs/ai-environment.md)
+- [平台 Agent Harness](docs/platform-agent-harness.md)
 - [iOS 项目启动最小指南](docs/ios-project-bootstrap.md)
 - [ADR 0001: Phase 1 使用 native monorepo](docs/decisions/0001-monorepo-phase-1.md)
 - [ADR 0002: Phase 1 只保留 thin engine adapter](docs/decisions/0002-thin-engine-adapter.md)
