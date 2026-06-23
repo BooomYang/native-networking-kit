@@ -43,8 +43,8 @@ _Avoid_: all tests, passed everything, release readiness
 _Avoid_: official validation, required preflight, canonical check
 
 **Swift host loopback check**:
-运行在 macOS Swift host process 中的本地回环集成检查，使用真实 `URLSessionNativeHttpEngine` 和 `URLSession` 访问 `127.0.0.1` mock server。它验证少量真实 host transport boundary，不等于 iOS Simulator/device L3。
-_Avoid_: host loopback harness, iOS L3 harness, platform runtime harness
+运行在 macOS Swift host process 中的 L3 本地回环集成检查，使用真实 `URLSessionNativeHttpEngine` 和 `URLSession` 访问 `127.0.0.1` mock server。它不等于 L5 iOS Simulator/device runtime validation。
+_Avoid_: platform runtime harness, simulator loopback, device validation
 
 **preflight**:
 进入 PR、merge、release 或 handoff 之前运行的组合验证入口。它只表示当前变更通过了该决策点要求的 checks，不表示已经完成更大范围的 runtime、弱网、性能或全平台验证。

@@ -65,6 +65,12 @@ Harmony/ArkTS 的 Promise、TaskPool、worker、RCP callback 等语义先使用 
 
 状态：candidate，已完成首轮本机实测；仍不作为 canonical verification command。
 
+角色边界：
+
+- `build-ios-apps` 表示本仓库候选采用的 iOS app 构建、运行和调试 agent capability / skill。
+- XcodeBuildMCP 是当前实际执行该 capability 的 tool backend。
+- 谈验证覆盖时，二者不作为两套测试路径分别计数；统一映射到 `docs/testing-strategy.md` 的测试层级。
+
 目的：
 
 - 验证 `build-ios-apps` / XcodeBuildMCP 能否同等完成现有 `swift test`、`xcodebuild build` 的 agent-driven 执行路径。
@@ -78,12 +84,21 @@ Harmony/ArkTS 的 Promise、TaskPool、worker、RCP callback 等语义先使用 
 
 本轮实测记录（2026-06-23）：
 
-- 对照基线：`./scripts/verify-ios-pr.sh` 通过，覆盖 iOS Swift Package tests、Xcode host app build 和 Swift host loopback check。
+- 对照基线：`./scripts/verify-ios-pr.sh` 通过，覆盖 L1、L2、L3 和 L4；其中 L3 是 Swift host loopback check，不覆盖 platform runtime readiness check 或 L5。
 - XcodeBuildMCP session defaults 使用 `NativeNetKitExample.xcodeproj`、`NativeNetKitExample` scheme、`iPhone 17` simulator、`com.aifirst.nativenetkit.example` bundle id 和 `.tmp/xcodebuildmcp-ios-example` DerivedData；未持久化 `.xcodebuildmcp/config.yaml`。
 - `build_run_sim` 通过，完成 build、install 和 launch，返回 app path、build log、runtime log 与 OS log。
 - `wait_for_ui` / `snapshot_ui` 能读取首屏 `NativeNetKit`、`https://example.com`、`GET` 和 `Ready`；未点击 `GET`，未触发 public network request。
 - `screenshot` 通过，生成本机临时截图。
-- runtime log 由 XcodeBuildMCP 写入 `~/Library/Developer/XcodeBuildMCP/workspaces/.../logs/com.aifirst.nativenetkit.example_*.log`；相较 shell scripts，它能补充 launch 后 runtime log 和 UI evidence，但仍不能替代 scripts 的 canonical pass/fail 语义。
+- runtime log 由 XcodeBuildMCP 写入 `~/Library/Developer/XcodeBuildMCP/workspaces/.../logs/com.aifirst.nativenetkit.example_*.log`；本轮只证明 platform runtime readiness check 可用，不计入 L5 platform runtime validation，也不能替代 scripts 的 canonical pass/fail 语义。
+
+L5 升级条件：
+
+- 在 iOS Simulator/device 中启动 `NativeNetKitExample`。
+- 通过 `NativeNetClient` 发起 controlled network request，endpoint 使用本机或受控 mock server，不使用 public network endpoint。
+- 用 UI、可观察状态或 runtime log 证明 response/error 行为。
+- 保留 runtime log 作为失败诊断材料；weak network、performance、leak 和 reliability 仍属于 L6/L7。
+
+后续 L5 controlled network 优先复用 `NativeNetKitExample`：通过 URL 输入框填入本机 mock server endpoint，点击 `GET`，再等待结果文本和 runtime log 证明请求行为。Phase 1 不新增第二个 iOS app 或专门 platform runtime harness；只有当 L5 场景明显增多时再拆分。
 
 后续升级检查项：
 
