@@ -61,26 +61,27 @@ Harmony/ArkTS 的 Promise、TaskPool、worker、RCP callback 等语义先使用 
 - 换机器、换用户环境或当前线程不可见时，按“不可用 fallback”做人工 checklist 审查。
 - 候选能力仍需专门 PR 实测后，才能升级为正式 opt-in harness。
 
-### iOS build-ios-apps capability check
+### iOS platform runtime readiness check
 
-状态：candidate，已完成首轮本机实测；仍不作为 canonical verification command。
+状态：已完成首轮本机 platform runtime readiness check；仍不作为 canonical verification command。当前执行 backend 是 `build-ios-apps` / XcodeBuildMCP。
 
 角色边界：
 
 - `build-ios-apps` 表示本仓库候选采用的 iOS app 构建、运行和调试 agent capability / skill。
 - XcodeBuildMCP 是当前实际执行该 capability 的 tool backend。
-- 谈验证覆盖时，二者不作为两套测试路径分别计数；统一映射到 `docs/testing-strategy.md` 的测试层级。
+- 谈验证覆盖时，二者不作为两套测试路径分别计数；统一映射到 `docs/testing-strategy.md` 的 platform runtime readiness check，不计入 L5。
 
 目的：
 
 - 验证 `build-ios-apps` / XcodeBuildMCP 能否同等完成现有 `swift test`、`xcodebuild build` 的 agent-driven 执行路径。
-- 验证它能否补充当前缺失的 Simulator runtime evidence，例如 app launch、UI snapshot、screenshot 和 runtime log。
+- 验证它能否补充 iOS Simulator platform runtime readiness evidence，例如 app launch、UI snapshot、screenshot 和 runtime log。
 
 边界：
 
 - 不替代 `./scripts/verify-ios-tests.sh`、`./scripts/verify-ios.sh` 或 `./scripts/verify-ios-pr.sh`。
-- 实测通过前，不写入 `docs/verification-matrix.md` 作为正式验证入口。
-- 即使 Simulator evidence 通过，也不等于 iOS device validation。
+- 不作为必需入口或 canonical pass/fail command。
+- readiness check 通过不等于 iOS device validation、L5 platform runtime validation 或公网请求验证。
+- 本轮只验证 example app 初始 UI 可启动和可采集；不点击 `GET`，不触发公网请求。
 
 本轮实测记录（2026-06-23）：
 
@@ -110,25 +111,26 @@ L5 升级条件：
 
 ### Android emulator capability check
 
-状态：candidate，留待后续专门 PR 实测。
+状态：opt-in platform runtime readiness check。入口是 `./scripts/verify-android-emulator.sh`；不并入默认 `./scripts/verify-android.sh` 或 `./scripts/verify-local.sh`。
 
 目的：
 
-- 验证 `android-emulator-skill` 的 Gradle + ADB 路径能否稳定完成 install、start、foreground check、`uiautomator dump` 和 log capture。
-- 补充 Android emulator runtime smoke evidence，但不替代 `./scripts/verify-android.sh`。
+- 验证 Gradle + ADB 路径能否稳定完成 install、start、foreground check、`uiautomator dump` 和 log capture。
+- 补充 Android emulator platform runtime readiness evidence，但不替代 `./scripts/verify-android.sh`。
 
 边界：
 
-- 当前 `android-coroutines` 已作为并发规则采纳；`android-emulator-skill` 仍是待验证工具链。
+- 当前 `android-coroutines` 已作为并发规则采纳；Android emulator readiness check 是 opt-in runtime evidence，不是默认 Android verification。
 - 优先使用本机 Android SDK 下的 `adb`，不要依赖不稳定的 IDE Run Configuration。
-- emulator smoke 通过不等于 Android Studio 手动验收或真机 validation。
+- emulator readiness check 通过不等于 Android Studio 手动验收、真机 validation、L5 platform runtime validation 或公网请求验证。
+- 脚本只验证 example app 初始 UI 可启动和可采集；不点击 `GET`，不触发公网请求。
 
-建议检查项：
+检查项：
 
 - 使用 `./scripts/verify-android.sh` 保持 Gradle tests、lint、example assemble 和 local Maven publishing 基线。
 - 使用 ADB 安装并启动 `:example`。
 - 用 `dumpsys window` 确认前台 app。
-- 用 `uiautomator dump` 采集可读 UI 信息。
+- 用 `uiautomator dump` 采集可读 UI 信息，并确认初始 `Ready` 和 `GET` 可见。
 - 用 bounded logcat 采集目标 package 日志，避免无限挂起。
 
 ### Harmony DevEco capability check
