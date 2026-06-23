@@ -4,7 +4,10 @@ import XCTest
 
 final class NativeNetKitTests: XCTestCase {
     func testClientForwardsRequestToInjectedEngine() async throws {
-        // 验证意图：当调用方通过 `NativeNetClient.get` 发起 GET 时，client 应把 method、url 和 headers 交给 injected engine；防止 client 层破坏统一 request contract。
+        // 验证意图：
+        // - 场景：调用方通过 `NativeNetClient.get` 发起 GET。
+        // - 行为：client 应把 method、url 和 headers 交给 injected engine。
+        // - 风险：防止 client 层破坏统一 request contract。
         let url = try XCTUnwrap(URL(string: "https://example.com/status"))
         let engine = MockEngine { request in
             XCTAssertEqual(request.method, "GET")
@@ -22,7 +25,10 @@ final class NativeNetKitTests: XCTestCase {
     }
 
     func testClientPropagatesNativeNetworkError() async throws {
-        // 验证意图：当 injected engine 抛出 `NativeNetworkError` 时，client 应原样传播；防止 client 层吞掉或重写统一错误语义。
+        // 验证意图：
+        // - 场景：injected engine 抛出 `NativeNetworkError`。
+        // - 行为：client 应原样传播统一错误语义。
+        // - 风险：防止 client 层吞掉或重写 `NativeNetworkError`。
         let url = try XCTUnwrap(URL(string: "https://example.com/fail"))
         let expected = NativeNetworkError(code: .transportFailure, message: "mock failure")
         let client = NativeNetClient(engine: MockEngine { _ in throw expected })
@@ -43,7 +49,10 @@ final class URLSessionNativeHttpEngineTests: XCTestCase {
     }
 
     func testEngineMapsHTTPResponseIntoNativeResponse() async throws {
-        // 验证意图：当 native engine 收到 HTTP 503 时，应返回 `NativeResponse` 而不是抛 transport error；防止业务 HTTP 状态被误分类为网络故障。
+        // 验证意图：
+        // - 场景：native engine 收到 HTTP 503。
+        // - 行为：应返回 `NativeResponse` 而不是抛 transport error。
+        // - 风险：防止业务 HTTP 状态被误分类为网络故障。
         let url = try XCTUnwrap(URL(string: "https://example.com/status"))
         let engine = makeClient { request in
             XCTAssertEqual(request.url, url)
@@ -68,7 +77,10 @@ final class URLSessionNativeHttpEngineTests: XCTestCase {
     }
 
     func testEngineMapsNonHTTPResponseToTransportFailure() async throws {
-        // 验证意图：当 `URLSession` 返回非 HTTP response 时，native engine 应映射为 `.transportFailure`；防止 adapter 向上层暴露无法解释的 response。
+        // 验证意图：
+        // - 场景：`URLSession` 返回非 HTTP response。
+        // - 行为：native engine 应映射为 `.transportFailure`。
+        // - 风险：防止 adapter 向上层暴露无法解释的 response。
         let url = try XCTUnwrap(URL(string: "https://example.com/non-http"))
         let engine = makeClient { _ in
             StubbedURLSessionResponse(
@@ -92,7 +104,10 @@ final class URLSessionNativeHttpEngineTests: XCTestCase {
     }
 
     func testEngineMapsURLSessionErrorToTransportFailureWithRawDescription() async throws {
-        // 验证意图：当 `URLSession` 抛出底层网络错误时，native engine 应映射为 `.transportFailure` 并保留 raw details；防止诊断信息丢失。
+        // 验证意图：
+        // - 场景：`URLSession` 抛出底层网络错误。
+        // - 行为：native engine 应映射为 `.transportFailure` 并保留 raw details。
+        // - 风险：防止诊断信息丢失。
         let url = try XCTUnwrap(URL(string: "https://example.com/offline"))
         let engine = makeClient { _ in
             throw URLError(.notConnectedToInternet)
@@ -109,7 +124,10 @@ final class URLSessionNativeHttpEngineTests: XCTestCase {
     }
 
     func testEngineBuildsURLRequestFromNativeRequest() async throws {
-        // 验证意图：当调用方传入 method、headers 和 body 时，native engine 应构造等价 `URLRequest`；防止 adapter 丢失影响请求语义的字段。
+        // 验证意图：
+        // - 场景：调用方传入 method、headers 和 body。
+        // - 行为：native engine 应构造等价 `URLRequest`。
+        // - 风险：防止 adapter 丢失影响请求语义的字段。
         let url = try XCTUnwrap(URL(string: "https://example.com/upload"))
         let requestBody = Data("payload".utf8)
         let engine = makeClient { request in
