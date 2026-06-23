@@ -43,18 +43,23 @@ Harmony/ArkTS 的 Promise、TaskPool、worker、RCP callback 等语义先使用 
 
 ### Skill / tool 接入状态
 
-状态：candidate，留待后续专门 PR 处理。
+状态：已完成首轮盘点。已采纳规则对应的 iOS / Swift 与 Android / Kotlin skills 当前均安装在用户级 `~/.codex/skills`；本仓库不创建项目级 skills 目录。
 
 目的：
 
 - 确认已采纳和候选 skill、plugin、MCP server 或 CLI 是否需要项目级安装、引用说明或 fallback checklist。
 - 避免 guidance 只在当前用户环境生效，换线程或换机器后失效。
 
-建议检查项：
+已确认用户级 skills：
 
-- 盘点用户级已安装 skill 与本仓库项目级可见能力。
-- 决定是否创建项目级 skills 目录，或仅在文档中声明安装前置。
-- 对不可安装或暂不安装的能力，补充人工审查 checklist。
+- iOS / Swift：`swift-api-design-guidelines-skill`、`swift-architecture-skill`、`swift-concurrency-pro`、`swift-testing-pro`。
+- Android / Kotlin：`android-architecture`、`android-coroutines`、`android-testing`、`android-gradle-logic`。
+
+当前决策：
+
+- 已采纳 skills 先使用用户级安装；它们是跨项目 agent 能力，不作为 NativeNetKit repo 资产提交。
+- 换机器、换用户环境或当前线程不可见时，按“不可用 fallback”做人工 checklist 审查。
+- 候选能力仍需专门 PR 实测后，才能升级为正式 opt-in harness。
 
 ### iOS build-ios-apps capability check
 
