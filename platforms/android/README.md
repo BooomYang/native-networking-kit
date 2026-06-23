@@ -42,6 +42,14 @@ test lint :example:assembleDebug publishToMavenLocal
 
 脚本使用 `platforms/android/gradlew`，并把 Gradle user home、Android user state 和 Maven local output 重定向到 `.tmp/`。
 
+需要采集 Android platform runtime readiness evidence 时，先启动一个 emulator 或连接一个设备，再运行 opt-in 脚本：
+
+```bash
+./scripts/verify-android-emulator.sh
+```
+
+该脚本会先运行 `./scripts/verify-android.sh`，再通过本机 Android SDK 下的 `adb` 安装并启动 `:example`，采集 foreground、`uiautomator dump` 和 bounded logcat 证据到 `.tmp/android-emulator-harness/`。如果有多个 online ADB target，需要设置 `ANDROID_SERIAL`。该脚本只验证初始 UI 的 `Ready` 和 `GET` 可见，不点击 `GET`，不计入 L5，也不代表 Android Studio、真机或公网请求验证通过。
+
 ## 当前验收边界
 
 - Unit tests 使用 injected mock engine，不执行 real network I/O。
