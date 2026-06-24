@@ -9,7 +9,7 @@
 | L1 | Client contract tests | client + injected engine，验证 request 构造、response/error 透传 | iOS/Android 已有；Harmony 目标一致 |
 | L2 | Engine adapter unit tests | native engine adapter + platform stub，验证 status/header/body/error mapping | iOS 已有 `URLProtocol` stub；Android 已有 fake `Call.Factory`；Harmony 待补 |
 | L3 | Host loopback integration | host process + 真实 engine adapter + `127.0.0.1` mock server | iOS Swift host loopback check 已有；Android JVM host loopback check 已有；Harmony 待补 |
-| L4 | Package/example integration build | library package + example app build | iOS/Android 有入口；Harmony pending |
+| L4 | Package/example integration build | library package + example app build | iOS/Android/Harmony 有入口 |
 | L5 | Platform runtime validation | Simulator/emulator/device 上触发真实 runtime behavior；网络库场景应包含 controlled network request | 按阶段人工判断 |
 | L6 | Weak network | weak network 条件下的行为 | 后续扩展 |
 | L7 | Perf/leak/reliability | latency、memory、leak、stability | 后续扩展 |

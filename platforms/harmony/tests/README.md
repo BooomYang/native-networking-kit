@@ -15,4 +15,4 @@ platforms/harmony/hvigorw assembleHap
 ./scripts/verify-harmony.sh
 ```
 
-如果缺少 `hvigorw`，脚本会以 pending 状态退出，并且不会声称 Harmony build verification 已通过。
+如果缺少 `hvigorw`，脚本会以 pending 状态退出；如果能发现 Hvigor 但构建失败，应报告真实错误。当前本机可发现 DevEco Studio bundled `hvigorw`，且 HAR/HAP CLI build 已通过。

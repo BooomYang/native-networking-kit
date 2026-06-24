@@ -11,7 +11,7 @@
 native-networking-kit/
 ├── platforms/android/   # Android Gradle library、example app 和 tests
 ├── platforms/ios/       # Swift Package library、tests、Xcode host app 和 host harnesses
-├── platforms/harmony/   # Harmony/ArkTS HAR skeleton、example shell 和 pending validation notes
+├── platforms/harmony/   # DevEco Studio 26 / Harmony ArkTS HAR skeleton 和 example shell
 ├── docs/                # Phase 1 context、verification matrix、testing strategy 和 decisions
 ├── scripts/             # 供人类和 Codex 使用的稳定命令入口
 └── AGENTS.md            # 持久化 Codex guidance

@@ -8,6 +8,8 @@
       "phone",
       "tablet"
     ],
+    "deliveryWithInstall": true,
+    "installationFree": false,
     "abilities": [
       {
         "name": "EntryAbility",

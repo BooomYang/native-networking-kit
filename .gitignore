@@ -15,6 +15,7 @@ node_modules/
 oh_modules/
 .hvigor/
 hvigor-local/
+BuildProfile.ets
 .tmp/
 *.hap
 *.har
