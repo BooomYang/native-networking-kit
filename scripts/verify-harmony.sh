@@ -7,17 +7,24 @@ DEVECO_HOME="${DEVECO_HOME:-/Applications/DevEco-Studio.app}"
 DEVECO_STUDIO_DIR="${DEVECO_HOME}/Contents"
 DEVECO_HVIGORW="${DEVECO_STUDIO_DIR}/tools/hvigor/bin/hvigorw"
 DEVECO_NODE_HOME="${DEVECO_STUDIO_DIR}/tools/node"
-DEVECO_SDK_HOME="${DEVECO_SDK_HOME:-${DEVECO_STUDIO_DIR}/sdk}"
+DEVECO_DEFAULT_SDK_HOME="${DEVECO_STUDIO_DIR}/sdk"
 HVIGOR_FLAGS=(--no-daemon --no-parallel)
 
 run_hvigor() {
   local hvigorw="$1"
-  shift
-  local env_args=("DEVECO_SDK_HOME=${DEVECO_SDK_HOME}")
+  local use_deveco_defaults="$2"
+  shift 2
+  local env_args=()
+
+  if [ -n "${DEVECO_SDK_HOME:-}" ]; then
+    env_args+=("DEVECO_SDK_HOME=${DEVECO_SDK_HOME}")
+  elif [ "${use_deveco_defaults}" = "true" ]; then
+    env_args+=("DEVECO_SDK_HOME=${DEVECO_DEFAULT_SDK_HOME}")
+  fi
 
   if [ -n "${NODE_HOME:-}" ]; then
     env_args+=("NODE_HOME=${NODE_HOME}")
-  elif [ -x "${DEVECO_NODE_HOME}/bin/node" ]; then
+  elif [ "${use_deveco_defaults}" = "true" ] && [ -x "${DEVECO_NODE_HOME}/bin/node" ]; then
     env_args+=("NODE_HOME=${DEVECO_NODE_HOME}")
   fi
 
@@ -28,14 +35,14 @@ run_hvigor() {
 }
 
 if [ -x "${HARMONY_DIR}/hvigorw" ]; then
-  run_hvigor "${HARMONY_DIR}/hvigorw" --mode module -p module=NativeNetKit assembleHar
-  run_hvigor "${HARMONY_DIR}/hvigorw" assembleHap
+  run_hvigor "${HARMONY_DIR}/hvigorw" false --mode module -p module=NativeNetKit assembleHar
+  run_hvigor "${HARMONY_DIR}/hvigorw" false assembleHap
 elif command -v hvigorw >/dev/null 2>&1; then
-  run_hvigor "$(command -v hvigorw)" --mode module -p module=NativeNetKit assembleHar
-  run_hvigor "$(command -v hvigorw)" assembleHap
+  run_hvigor "$(command -v hvigorw)" false --mode module -p module=NativeNetKit assembleHar
+  run_hvigor "$(command -v hvigorw)" false assembleHap
 elif [ -x "${DEVECO_HVIGORW}" ] && [ -x "${DEVECO_NODE_HOME}/bin/node" ]; then
-  run_hvigor "${DEVECO_HVIGORW}" --mode module -p module=NativeNetKit assembleHar
-  run_hvigor "${DEVECO_HVIGORW}" assembleHap
+  run_hvigor "${DEVECO_HVIGORW}" true --mode module -p module=NativeNetKit assembleHar
+  run_hvigor "${DEVECO_HVIGORW}" true assembleHap
 else
   echo "PENDING: hvigorw is not available. Open platforms/harmony in DevEco Studio or install Hvigor, then rerun this script."
 fi
