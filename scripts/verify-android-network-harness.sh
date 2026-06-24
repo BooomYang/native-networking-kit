@@ -81,4 +81,4 @@ ANDROID_SDK_ROOT="${ANDROID_SDK}" \
 ANDROID_USER_HOME="${ANDROID_USER_DIR}" \
 NATIVE_NET_KIT_MOCK_BASE_URL="http://127.0.0.1:${PORT}" \
 NATIVE_NET_KIT_UNUSED_PORT="${UNUSED_PORT}" \
-"${GRADLEW}" --no-daemon -p "${ROOT_DIR}/platforms/android" :native-netkit:networkHarnessTest
+"${GRADLEW}" --no-daemon --rerun-tasks -p "${ROOT_DIR}/platforms/android" :native-netkit:networkHarnessTest
