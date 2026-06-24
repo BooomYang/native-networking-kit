@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.testing.Test
+import org.gradle.language.base.plugins.LifecycleBasePlugin
+
 plugins {
     alias(libs.plugins.native.netkit.android.library)
     id("maven-publish")
@@ -25,7 +28,29 @@ dependencies {
     testImplementation(libs.coroutines.test)
 }
 
+tasks.withType<Test>().configureEach {
+    if (name != "networkHarnessTest") {
+        exclude("**/OkHttpNativeHttpEngineLoopbackTest.class")
+    }
+}
+
 afterEvaluate {
+    val debugUnitTest = tasks.named<Test>("testDebugUnitTest")
+
+    tasks.register<Test>("networkHarnessTest") {
+        description = "Runs Android host loopback tests against the shared NativeNetKit mock server."
+        group = LifecycleBasePlugin.VERIFICATION_GROUP
+        dependsOn(
+            "compileDebugUnitTestKotlin",
+            "compileDebugUnitTestJavaWithJavac",
+            "processDebugUnitTestJavaRes",
+        )
+        testClassesDirs = debugUnitTest.get().testClassesDirs
+        classpath = debugUnitTest.get().classpath
+        include("**/OkHttpNativeHttpEngineLoopbackTest.class")
+        shouldRunAfter(debugUnitTest)
+    }
+
     publishing {
         publications {
             create<MavenPublication>("release") {

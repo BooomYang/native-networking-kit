@@ -2,20 +2,17 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HARNESS_DIR="${ROOT_DIR}/platforms/ios/Harnesses/NetworkHarness"
+GRADLEW="${ROOT_DIR}/platforms/android/gradlew"
 MOCK_SERVER="${ROOT_DIR}/tools/network-harness/mock-server.js"
-TMP_DIR="${ROOT_DIR}/.tmp/ios-network-harness"
-SWIFT_TMP_DIR="${TMP_DIR}/swift"
+TMP_DIR="${ROOT_DIR}/.tmp/android-network-harness"
+GRADLE_HOME="${ROOT_DIR}/.tmp/gradle"
+ANDROID_USER_DIR="${ROOT_DIR}/.tmp/android"
+JAVA_USER_HOME="${ROOT_DIR}/.tmp/home"
+MAVEN_LOCAL_REPO="${ROOT_DIR}/.tmp/m2/repository"
 SERVER_LOG="${TMP_DIR}/mock-server.log"
+DEFAULT_ANDROID_SDK="${HOME}/Library/Android/sdk"
+ANDROID_SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-${DEFAULT_ANDROID_SDK}}}"
 SERVER_PID=""
-
-mkdir -p \
-  "${TMP_DIR}" \
-  "${SWIFT_TMP_DIR}/cache" \
-  "${SWIFT_TMP_DIR}/config" \
-  "${SWIFT_TMP_DIR}/security" \
-  "${SWIFT_TMP_DIR}/scratch" \
-  "${SWIFT_TMP_DIR}/module-cache"
 
 cleanup() {
   if [[ -n "${SERVER_PID}" ]] && kill -0 "${SERVER_PID}" >/dev/null 2>&1; then
@@ -25,12 +22,24 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-for tool in node swift; do
+for tool in node; do
   if ! command -v "${tool}" >/dev/null 2>&1; then
     echo "[error] required tool not found: ${tool}" >&2
     exit 1
   fi
 done
+
+if [ ! -x "${GRADLEW}" ]; then
+  echo "Android Gradle Wrapper is missing or not executable: ${GRADLEW}" >&2
+  exit 1
+fi
+
+if [ ! -d "${ANDROID_SDK}" ]; then
+  echo "Android SDK not found. Set ANDROID_HOME or ANDROID_SDK_ROOT, or install SDK at ${DEFAULT_ANDROID_SDK}." >&2
+  exit 1
+fi
+
+mkdir -p "${TMP_DIR}" "${GRADLE_HOME}" "${ANDROID_USER_DIR}" "${JAVA_USER_HOME}" "${MAVEN_LOCAL_REPO}"
 
 rm -f "${SERVER_LOG}"
 node "${MOCK_SERVER}" >"${SERVER_LOG}" 2>&1 &
@@ -61,18 +70,15 @@ if [[ -z "${PORT}" || -z "${UNUSED_PORT}" ]]; then
   exit 1
 fi
 
-echo "NativeNetKit Swift host loopback check"
+echo "NativeNetKit Android host loopback check"
 echo "Mock server: http://127.0.0.1:${PORT}"
 
-CLANG_MODULE_CACHE_PATH="${SWIFT_TMP_DIR}/module-cache" \
+GRADLE_USER_HOME="${GRADLE_HOME}" \
+GRADLE_OPTS="-Duser.home=${JAVA_USER_HOME} -Dmaven.repo.local=${MAVEN_LOCAL_REPO}" \
+HOME="${JAVA_USER_HOME}" \
+ANDROID_HOME="${ANDROID_SDK}" \
+ANDROID_SDK_ROOT="${ANDROID_SDK}" \
+ANDROID_USER_HOME="${ANDROID_USER_DIR}" \
 NATIVE_NET_KIT_MOCK_BASE_URL="http://127.0.0.1:${PORT}" \
 NATIVE_NET_KIT_UNUSED_PORT="${UNUSED_PORT}" \
-swift run \
-  --package-path "${HARNESS_DIR}" \
-  --cache-path "${SWIFT_TMP_DIR}/cache" \
-  --config-path "${SWIFT_TMP_DIR}/config" \
-  --security-path "${SWIFT_TMP_DIR}/security" \
-  --scratch-path "${SWIFT_TMP_DIR}/scratch" \
-  --manifest-cache local \
-  --disable-sandbox \
-  NativeNetKitNetworkHarness
+"${GRADLEW}" --no-daemon -p "${ROOT_DIR}/platforms/android" :native-netkit:networkHarnessTest

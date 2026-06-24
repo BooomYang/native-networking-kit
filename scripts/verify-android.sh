@@ -28,7 +28,7 @@ HOME="${JAVA_USER_HOME}" \
 ANDROID_HOME="${ANDROID_SDK}" \
 ANDROID_SDK_ROOT="${ANDROID_SDK}" \
 ANDROID_USER_HOME="${ANDROID_USER_DIR}" \
-"${GRADLEW}" -p "${ROOT_DIR}/platforms/android" \
+"${GRADLEW}" --no-daemon -p "${ROOT_DIR}/platforms/android" \
   :native-netkit:test \
   :native-netkit:lint \
   :native-netkit:publishToMavenLocal \

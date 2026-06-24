@@ -9,6 +9,10 @@ import kotlin.test.assertFailsWith
 class NativeNetKitTest {
     @Test
     fun clientForwardsRequestToInjectedEngine() = runTest {
+        // 验证意图：
+        // - 场景：调用方通过 `NativeNetClient.get` 发起 GET。
+        // - 行为：client 应把 method、url 和 headers 交给 injected engine。
+        // - 风险：防止 client 层破坏统一 request contract。
         val engine = NativeHttpEngine { request ->
             assertEquals("GET", request.method)
             assertEquals("https://example.com/status", request.url)
@@ -33,6 +37,10 @@ class NativeNetKitTest {
 
     @Test
     fun clientPropagatesNativeNetworkException() = runTest {
+        // 验证意图：
+        // - 场景：injected engine 抛出 `NativeNetworkException`。
+        // - 行为：client 应原样传播统一错误语义。
+        // - 风险：防止 client 层吞掉或重写 `NativeNetworkException`。
         val expected = NativeNetworkException(
             code = NativeNetworkErrorCode.TRANSPORT_FAILURE,
             message = "mock failure",
