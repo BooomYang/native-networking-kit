@@ -2,6 +2,11 @@
 set -u
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DEVECO_HOME="${DEVECO_HOME:-/Applications/DevEco-Studio.app}"
+DEVECO_STUDIO_DIR="${DEVECO_HOME}/Contents"
+DEVECO_HVIGORW="${DEVECO_STUDIO_DIR}/tools/hvigor/bin/hvigorw"
+DEVECO_NODE_HOME="${DEVECO_STUDIO_DIR}/tools/node"
+DEVECO_SDK_HOME="${DEVECO_SDK_HOME:-${DEVECO_STUDIO_DIR}/sdk}"
 
 echo "NativeNetKit doctor"
 echo "Repo: ${ROOT_DIR}"
@@ -49,6 +54,13 @@ if [ -x "${ROOT_DIR}/platforms/harmony/hvigorw" ]; then
   echo "[ok] harmony hvigor wrapper: platforms/harmony/hvigorw"
 elif command -v hvigorw >/dev/null 2>&1; then
   echo "[ok] harmony hvigorw on PATH: $(command -v hvigorw)"
+elif [ -x "${DEVECO_HVIGORW}" ] && [ -x "${DEVECO_NODE_HOME}/bin/node" ]; then
+  echo "[ok] harmony bundled hvigorw: ${DEVECO_HVIGORW}"
+  if [ -d "${DEVECO_SDK_HOME}" ]; then
+    echo "[ok] harmony bundled sdk path: ${DEVECO_SDK_HOME}"
+  else
+    echo "[pending] harmony bundled sdk path missing: ${DEVECO_SDK_HOME}"
+  fi
 else
   echo "[pending] harmony hvigorw not found"
 fi

@@ -136,24 +136,36 @@ L5 升级条件：
 
 ### Harmony DevEco capability check
 
-状态：candidate / pending。本机当前 `deveco` 和 DevEco Studio 可用，`devecocli` 与 `hvigorw` 当前不在 PATH。
+状态：已完成首轮 capability check。本机当前 `deveco`、DevEco Studio 26 和 DevEco Studio bundled `hvigorw` 可用；`devecocli` 可通过 `npm exec --package @deveco/deveco-cli@latest -- devecocli` 使用，PATH 上的 `hvigorw` 当前不可用。
 
 目的：
 
-- 验证 `devecocli build` 是否能成为 Harmony 的确定性构建入口。
-- 保留 `hvigorw` 作为当前 `./scripts/verify-harmony.sh` 已表达的 fallback。
+- 验证 DevEco Studio 26 / Hvigor `modelVersion: "26.0.0"` 能否成为 Harmony 的当前工程结构基线。
+- 验证 `devecocli build` 能否成为 Harmony 的确定性构建入口。
+- 保留 `hvigorw` 作为当前 `./scripts/verify-harmony.sh` 已表达的 fallback，并允许脚本探测 DevEco Studio bundled `hvigorw`。
 - 使用 DevEco Code 作为 HarmonyOS / ArkTS 知识与工具桥接，而不是自治 coding agent。
 
 边界：
 
 - DevEco Code 的回答不能替代 `devecocli build`、`hvigorw` 或 DevEco Studio 的真实构建结果。
 - 不把 API key、模型配置或私有服务假设写入仓库。
-- 在 DevEco/Hvigor 真实验证前，Harmony 继续保持 pending。
+- DevEco/Hvigor CLI build 通过不等于 DevEco Studio 手工验收、设备运行、L5 platform runtime validation 或公网请求验证。
 
-建议检查项：
+本轮实测记录（2026-06-23）：
 
-- 安装或暴露 `devecocli` 后运行 `devecocli build`。
-- 如 `hvigorw` 可用，继续运行 HAR/HAP build fallback。
+- DevEco Studio 安装版本为 26.0.0，bundled SDK display name 为 HarmonyOS 26.0.0。
+- `DEVECO_SDK_HOME` 必须指向 `/Applications/DevEco-Studio.app/Contents/sdk`；误设为 `Contents/sdk/default` 会触发 `00303168 SDK component missing`。
+- `deveco` 是 `@deveco/deveco-code` AI/agent CLI，不是 DevEco Studio build CLI；本仓库只把它视为知识与诊断桥接。
+- DevEco Studio bundled `hvigorw` 位于 `/Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw`，需要配合 bundled Node 使用。
+- Harmony 工程已补齐 DevEco Studio 26 最小结构：`hvigor/hvigor-config.json5`、`modelVersion: "26.0.0"`、root product SDK metadata、`AppScope/app.json5` 和必需资源。
+- `npm exec --yes --package @deveco/deveco-cli@latest -- devecocli build` 通过，证明 devecocli 可作为确定性构建入口。
+- `./scripts/verify-harmony.sh` 通过，完成 `NativeNetKit` HAR assemble 和 example HAP assemble；签名缺失仅导致 unsigned artifact / skip sign warning，不阻塞 Phase 1 L4 build。
+- 本轮只把 Harmony L4 package/example CLI build 写成 covered；L1/L2/L3/L5 仍 pending。
+
+后续检查项：
+
+- 如需减少 `npm exec` 依赖，可安装或暴露全局 `devecocli` 后运行 `devecocli build`。
+- 后续可把 `devecocli build` 包装成 opt-in script；当前 canonical Harmony verification 仍是 `./scripts/verify-harmony.sh`。
 - 用 DevEco Code 查询 ArkTS / RCP / module metadata 语义时，记录其为辅助诊断，不作为通过证据。
 
 ## 暂缓纳入
