@@ -54,7 +54,7 @@ platforms/android
 :example:assembleDebug
 ```
 
-脚本使用 `platforms/android/gradlew`，并把 Gradle user home、Android user state 和 Maven local output 重定向到 `.tmp/`。
+它覆盖 Android L1/L2 和 L4，但不运行 L3 host loopback。脚本使用 `platforms/android/gradlew`，并把 Gradle user home、Android user state 和 Maven local output 重定向到 `.tmp/`。
 
 组件独立验证：
 
@@ -62,7 +62,7 @@ platforms/android
 ./scripts/verify-android-library.sh
 ```
 
-该脚本只验证 `:native-netkit` 的 unit tests、lint 和 Maven local publication，不依赖 example。
+该脚本验证 `:native-netkit` 的 L1 client contract tests、L2 engine adapter unit tests、lint 和 Maven local publication，不依赖 example。
 
 example 宿主集成验证：
 
@@ -71,6 +71,22 @@ example 宿主集成验证：
 ```
 
 该脚本验证 `:example` 通过 `implementation(project(":native-netkit"))` 本地集成 library 后可以 lint 和 assemble debug。
+
+host loopback 验证：
+
+```bash
+./scripts/verify-android-network-harness.sh
+```
+
+该脚本启动 repo-level 共享 Node mock server，再运行 `:native-netkit:networkHarnessTest`。它属于 L3 host loopback：在 local JVM process 中通过真实 `OkHttpNativeHttpEngine` 访问 `127.0.0.1`，覆盖 success、delay、closed connection 和 unused port；它不启动 emulator/device，不计入 L5。
+
+Android PR preflight：
+
+```bash
+./scripts/verify-android-pr.sh
+```
+
+该脚本组合 Android library、example 和 host loopback checks，覆盖 L1、L2、L3 和 L4；其中 L3 仍不是 emulator/device runtime validation。
 
 需要采集 Android platform runtime readiness evidence 时，先启动一个 emulator 或连接一个设备，再运行 opt-in 脚本：
 
@@ -82,9 +98,11 @@ example 宿主集成验证：
 
 ## 当前验收边界
 
-- Unit tests 使用 injected mock engine，不执行 real network I/O。
-- 当前 Android L1/L4 入口由 `./scripts/verify-android-library.sh`、`./scripts/verify-android-example.sh` 和 `./scripts/verify-android.sh` 覆盖；L2 adapter stub、emulator/device L3 和 L5 仍是 target/pending。
+- L1 tests 使用 injected mock engine，不执行 real network I/O；L2 tests 使用 fake `Call.Factory`，不访问 public network。
+- 当前 Android L1/L2/L4 入口由 `./scripts/verify-android-library.sh`、`./scripts/verify-android-example.sh` 和 `./scripts/verify-android.sh` 覆盖；L3 host loopback 由 `./scripts/verify-android-network-harness.sh` 覆盖。
+- `./scripts/verify-android.sh` 不等于 Android PR preflight；需要覆盖 L1/L2/L3/L4 时运行 `./scripts/verify-android-pr.sh`。
 - `:example:assembleDebug` 只能证明 example app 可以构建，不等同于已经在 Android Studio 或模拟器中手动运行通过。
+- `./scripts/verify-android-network-harness.sh` 只验证 host process + `127.0.0.1` loopback，不等同于 Android Studio、emulator/device 或 L5 通过。
 - 如果当前机器缺少 Android SDK，`./scripts/verify-android.sh` 应明确失败并提示配置 `ANDROID_HOME` 或 `ANDROID_SDK_ROOT`，不能把该平台标记为 passed。
 
 ## 常见问题

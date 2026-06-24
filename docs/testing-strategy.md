@@ -6,15 +6,19 @@
 
 | 层级 | 名称 | 目的 | 当前状态 |
 | --- | --- | --- | --- |
-| L1 | Client contract tests | client + injected engine，验证 request 构造、response/error 透传 | iOS 已有；Android/Harmony 目标一致 |
-| L2 | Engine adapter unit tests | native engine adapter + platform stub，验证 status/header/body/error mapping | iOS 已有 `URLProtocol` stub；Android/Harmony 待补 |
-| L3 | Host loopback integration | host process + 真实 engine adapter + `127.0.0.1` mock server | iOS 已有 Swift host loopback check；Android/Harmony 待补 |
+| L1 | Client contract tests | client + injected engine，验证 request 构造、response/error 透传 | iOS/Android 已有；Harmony 目标一致 |
+| L2 | Engine adapter unit tests | native engine adapter + platform stub，验证 status/header/body/error mapping | iOS 已有 `URLProtocol` stub；Android 已有 fake `Call.Factory`；Harmony 待补 |
+| L3 | Host loopback integration | host process + 真实 engine adapter + `127.0.0.1` mock server | iOS Swift host loopback check 已有；Android JVM host loopback check 已有；Harmony 待补 |
 | L4 | Package/example integration build | library package + example app build | iOS/Android 有入口；Harmony pending |
 | L5 | Platform runtime validation | Simulator/emulator/device 上触发真实 runtime behavior；网络库场景应包含 controlled network request | 按阶段人工判断 |
 | L6 | Weak network | weak network 条件下的行为 | 后续扩展 |
 | L7 | Perf/leak/reliability | latency、memory、leak、stability | 后续扩展 |
 
 Swift host loopback check 属于 L3：它用真实 `URLSessionNativeHttpEngine` 访问本机 `127.0.0.1` mock server，但运行在 Swift host/macOS process 中，不等于 L5 iOS Simulator/device runtime validation。
+
+三端 L3 host loopback 可以共用 repo-level controlled mock server 和 scenario inputs，用来保证各平台面对同一组 `127.0.0.1` 响应、延迟和断连刺激；共用测试输入不等于共享 runtime code。
+
+Android L3 host loopback 优先使用 local JVM test 承载：由独立 verification script 启动共享 Node mock server，并通过 Gradle 只运行对应 L3 test；它仍然是 host process + real `OkHttpNativeHttpEngine` + `127.0.0.1` loopback，不等于 emulator/device L5。
 
 Platform runtime readiness check 用来确认 Simulator/emulator/device、example app launch、UI snapshot、screenshot 和 runtime log 采集链路可用；它是 L5 前置就绪检查，不计入 L5 behavior validation。
 
@@ -40,6 +44,8 @@ Platform runtime readiness check 用来确认 Simulator/emulator/device、exampl
 - 日常 iOS library 变更先跑 L1/L2：`./scripts/verify-ios-tests.sh`。
 - iOS build/package/example 相关变更跑 L4：`./scripts/verify-ios.sh`。
 - iOS PR preflight 跑：`./scripts/verify-ios-pr.sh`；它覆盖 L1、L2、L3 和 L4，其中 L3 是 Swift host loopback check，不覆盖 platform runtime readiness check 或 L5。
+- 日常 Android library 变更先跑 L1/L2：`./scripts/verify-android-library.sh`。
+- Android PR preflight 跑：`./scripts/verify-android-pr.sh`；它覆盖 L1、L2、L3 和 L4，其中 L3 是 JVM host loopback check，不覆盖 platform runtime readiness check 或 L5。
 - 能在 L1/L2 验证的行为，不升级到 L3。
 - HTTP `503` 这类 adapter mapping 属于 L2；closed connection、unused local port、delay elapsed 这类真实网络边界才属于 host loopback。
 
@@ -51,8 +57,8 @@ Review 代码变更时，先判断 changed behavior 属于哪个 public behavior
 | --- | --- |
 | `NativeNetClient` public behavior、client method 或 request lifecycle ownership | L1 |
 | `NativeRequest`、`NativeResponse`、`NativeNetworkError` public semantics | L1 + L2，涉及真实 transport boundary 时加 L3 |
-| `NativeHttpEngine` contract 或 iOS `URLSessionNativeHttpEngine` adapter mapping | L2，涉及真实 socket、timeout、closed connection 或 unused port 时加 L3 |
-| Swift host loopback harness、mock server 或真实 host transport behavior | L3 |
+| `NativeHttpEngine` contract、iOS `URLSessionNativeHttpEngine` 或 Android `OkHttpNativeHttpEngine` adapter mapping | L2，涉及真实 socket、timeout、closed connection 或 unused port 时加 L3 |
+| Swift/Android host loopback harness、mock server 或真实 host transport behavior | L3 |
 | Swift Package manifest、Xcode host app project、example app build integration | L4 |
 | Simulator/emulator/device app flow、UI automation、runtime log 采集链路 | platform runtime readiness check；触发 controlled network request 时才是 L5 |
 | verification scripts、preflight orchestration 或验证入口语义 | 检查对应 L1-L7 覆盖是否仍真实，并同步 `docs/verification-matrix.md` |

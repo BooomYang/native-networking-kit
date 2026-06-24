@@ -8,9 +8,11 @@
 | iOS tests L1/L2 | `./scripts/verify-ios-tests.sh` | 运行 Swift Package tests，覆盖 client contract 和 engine adapter unit tests |
 | iOS build L4 | `./scripts/verify-ios.sh` | 运行 iOS tests，并构建通过 local Swift Package 集成 library 的 Xcode host example app |
 | iOS PR preflight | `./scripts/verify-ios-pr.sh` | 覆盖 L1、L2、L3 和 L4；其中 L3 是 Swift host loopback check，不覆盖 platform runtime readiness check 或 L5 |
-| Android library | `./scripts/verify-android-library.sh` | 当 Android SDK 可用时，运行 `:native-netkit:test`、`:native-netkit:lint` 和 `:native-netkit:publishToMavenLocal`，验证组件可独立构建和发布 |
+| Android library | `./scripts/verify-android-library.sh` | 当 Android SDK 可用时，运行 `:native-netkit:test`、`:native-netkit:lint` 和 `:native-netkit:publishToMavenLocal`，覆盖 L1/L2 并验证组件可独立构建和发布 |
 | Android example | `./scripts/verify-android-example.sh` | 当 Android SDK 可用时，运行 `:example:lint` 和 `:example:assembleDebug`，验证 example 通过本地 project dependency 集成 library |
 | Android aggregate | `./scripts/verify-android.sh` | 聚合运行 Android library 和 example 验证；Android Studio/模拟器直接验收需单独记录 |
+| Android host loopback | `./scripts/verify-android-network-harness.sh` | 启动共享 Node mock server，并运行 `:native-netkit:networkHarnessTest`，覆盖 L3 host loopback；不计入 L5 |
+| Android PR preflight | `./scripts/verify-android-pr.sh` | 覆盖 L1、L2、L3 和 L4；其中 L3 是 JVM host loopback check，不覆盖 platform runtime readiness check 或 L5 |
 | Android runtime readiness | `./scripts/verify-android-emulator.sh` | Opt-in；先运行 Android library/example baseline，再用 ADB 安装启动 example，采集 foreground、UI dump 和 bounded logcat；不计入 L5 |
 | Harmony skeleton | `./scripts/verify-harmony.sh` | 如果 Hvigor 可用则运行；否则以 pending 状态退出并给出清晰信息 |
 | All local | `./scripts/verify-local.sh` | 按顺序运行 doctor、iOS、Android 和 Harmony checks |
@@ -19,9 +21,9 @@
 
 | 层级 | iOS | Android | Harmony |
 | --- | --- | --- | --- |
-| L1 Client contract tests | `swift test` 已有 | Gradle tests 目标 | Hvigor/ArkTS tests 待 toolchain |
-| L2 Engine adapter unit tests | `URLProtocol` stub 已有 | OkHttp adapter stub 待补 | ArkTS adapter stub 待补 |
-| L3 Host loopback integration | `./scripts/verify-ios-network-harness.sh` 已有 | 待补对应 host loopback check | 待 DevEco/Hvigor 验证后补 |
+| L1 Client contract tests | `swift test` 已有 | `:native-netkit:test` 已有 | Hvigor/ArkTS tests 待 toolchain |
+| L2 Engine adapter unit tests | `URLProtocol` stub 已有 | `:native-netkit:test` fake `Call.Factory` 已有 | ArkTS adapter stub 待补 |
+| L3 Host loopback integration | `./scripts/verify-ios-network-harness.sh` 已有 | `./scripts/verify-android-network-harness.sh` 已有 | 待 DevEco/Hvigor 验证后补 |
 | L4 Package/example integration build | `./scripts/verify-ios.sh` | `./scripts/verify-android-library.sh` + `./scripts/verify-android-example.sh`，或 aggregate `./scripts/verify-android.sh` | `./scripts/verify-harmony.sh` pending |
 | L5 Platform runtime validation | Simulator/device controlled runtime behavior pending | emulator/device controlled runtime behavior pending | device/runtime pending |
 | L6 Weak network | 后续扩展 | 后续扩展 | 后续扩展 |
@@ -56,9 +58,10 @@ Android/Harmony 在补齐平台专属测试健康矩阵前，review 先按“三
 ## 平台说明
 
 - iOS tests 使用 mock engine，不执行 network I/O。
-- Android unit tests 使用 mock engine，不执行 network I/O。
+- Android L1 tests 使用 injected mock engine，不执行 network I/O；Android L2 tests 使用 fake `Call.Factory`，不访问 public network。
+- Android L3 host loopback check 使用真实 `OkHttpNativeHttpEngine` 访问共享 Node mock server 的 `127.0.0.1` endpoint，不等于 emulator/device L5。
 - Android library/package verification 和 example 宿主集成 verification 已拆分；改动只触及组件发布时优先跑 `./scripts/verify-android-library.sh`，改动触及 example 壳时优先跑 `./scripts/verify-android-example.sh`。
-- Swift host loopback check 属于 L3，只访问 `127.0.0.1`，不等于 L5 iOS Simulator/device runtime validation。
+- Swift host loopback check 属于 L3，只访问共享 Node mock server 的 `127.0.0.1` endpoint，不等于 L5 iOS Simulator/device runtime validation。
 - 非测试层级就绪检查：iOS XcodeBuildMCP candidate 已完成首轮本机 platform runtime readiness check，可 build/install/launch example app 并采集 UI snapshot、screenshot 和 runtime log；该检查不计入 L5。
 - 非测试层级就绪检查：`./scripts/verify-android-emulator.sh` 可 install/launch Android example app 并采集 foreground、UI dump 和 bounded logcat；该检查不计入 L5。
 - Examples 只有在用户操作触发时才可能执行 real network requests。
