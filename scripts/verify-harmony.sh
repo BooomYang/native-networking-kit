@@ -6,6 +6,7 @@ HARMONY_DIR="${ROOT_DIR}/platforms/harmony"
 DEVECO_HOME="${DEVECO_HOME:-/Applications/DevEco-Studio.app}"
 DEVECO_STUDIO_DIR="${DEVECO_HOME}/Contents"
 DEVECO_HVIGORW="${DEVECO_STUDIO_DIR}/tools/hvigor/bin/hvigorw"
+DEVECO_OHPM="${DEVECO_STUDIO_DIR}/tools/ohpm/bin/ohpm"
 DEVECO_NODE_HOME="${DEVECO_STUDIO_DIR}/tools/node"
 DEVECO_DEFAULT_SDK_HOME="${DEVECO_STUDIO_DIR}/sdk"
 HVIGOR_FLAGS=(--no-daemon --no-parallel)
@@ -34,13 +35,35 @@ run_hvigor() {
   )
 }
 
+install_harmony_test_deps() {
+  local ohpm_bin=""
+  if command -v ohpm >/dev/null 2>&1; then
+    ohpm_bin="$(command -v ohpm)"
+  elif [ -x "${DEVECO_OHPM}" ]; then
+    ohpm_bin="${DEVECO_OHPM}"
+  else
+    echo "PENDING: ohpm is not available. Install Harmony test dependencies, then rerun this script."
+    exit 0
+  fi
+
+  (
+    cd "${HARMONY_DIR}/native-netkit"
+    "${ohpm_bin}" install
+  )
+}
+
+install_harmony_test_deps
+
 if [ -x "${HARMONY_DIR}/hvigorw" ]; then
+  run_hvigor "${HARMONY_DIR}/hvigorw" false --mode module -p module=NativeNetKit test
   run_hvigor "${HARMONY_DIR}/hvigorw" false --mode module -p module=NativeNetKit assembleHar
   run_hvigor "${HARMONY_DIR}/hvigorw" false assembleHap
 elif command -v hvigorw >/dev/null 2>&1; then
+  run_hvigor "$(command -v hvigorw)" false --mode module -p module=NativeNetKit test
   run_hvigor "$(command -v hvigorw)" false --mode module -p module=NativeNetKit assembleHar
   run_hvigor "$(command -v hvigorw)" false assembleHap
 elif [ -x "${DEVECO_HVIGORW}" ] && [ -x "${DEVECO_NODE_HOME}/bin/node" ]; then
+  run_hvigor "${DEVECO_HVIGORW}" true --mode module -p module=NativeNetKit test
   run_hvigor "${DEVECO_HVIGORW}" true --mode module -p module=NativeNetKit assembleHar
   run_hvigor "${DEVECO_HVIGORW}" true assembleHap
 else

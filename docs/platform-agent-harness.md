@@ -159,8 +159,8 @@ L5 升级条件：
 - DevEco Studio bundled `hvigorw` 位于 `/Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw`，需要配合 bundled Node 使用。
 - Harmony 工程已补齐 DevEco Studio 26 最小结构：`hvigor/hvigor-config.json5`、`modelVersion: "26.0.0"`、root product SDK metadata、`AppScope/app.json5` 和必需资源。
 - `npm exec --yes --package @deveco/deveco-cli@latest -- devecocli build` 通过，证明 devecocli 可作为确定性构建入口。
-- `./scripts/verify-harmony.sh` 通过，完成 `NativeNetKit` HAR assemble 和 example HAP assemble；签名缺失仅导致 unsigned artifact / skip sign warning，不阻塞 Phase 1 L4 build。
-- 本轮只把 Harmony L4 package/example CLI build 写成 covered；L1/L2/L3/L5 仍 pending。
+- `./scripts/verify-harmony.sh` 通过，完成 `NativeNetKit` ArkTS unit test、HAR assemble 和 example HAP assemble；签名缺失仅导致 unsigned artifact / skip sign warning，不阻塞 Phase 1 L4 build。
+- Harmony L1 client contract tests 和 L2 `RcpNativeHttpEngine` adapter mapping tests 已 covered；L2 使用 fake RCP session seam，不访问真实网络。L3/L5 仍 pending。
 
 后续检查项：
 

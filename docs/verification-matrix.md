@@ -14,16 +14,16 @@
 | Android host loopback | `./scripts/verify-android-network-harness.sh` | 启动共享 Node mock server，并运行 `:native-netkit:networkHarnessTest`，覆盖 L3 host loopback；不计入 L5 |
 | Android PR preflight | `./scripts/verify-android-pr.sh` | 覆盖 L1、L2、L3 和 L4；其中 L3 是 JVM host loopback check，不覆盖 platform runtime readiness check 或 L5 |
 | Android runtime readiness | `./scripts/verify-android-emulator.sh` | Opt-in；先运行 Android library/example baseline，再用 ADB 安装启动 example，采集 foreground、UI dump 和 bounded logcat；不计入 L5 |
-| Harmony skeleton | `./scripts/verify-harmony.sh` | 使用 DevEco Studio bundled `hvigorw` 运行 HAR/HAP build；当前本机已通过 |
+| Harmony verification | `./scripts/verify-harmony.sh` | 使用 `ohpm` 安装 Harmony test dependencies，运行 `:NativeNetKit:test` 覆盖 L1/L2，并运行 HAR/HAP build 覆盖 L4 |
 | All local | `./scripts/verify-local.sh` | 按顺序运行 doctor、iOS、Android 和 Harmony checks |
 
 ## 三端测试层级
 
 | 层级 | iOS | Android | Harmony |
 | --- | --- | --- | --- |
-| L1 Client contract tests | `swift test` 已有 | `:native-netkit:test` 已有 | Hvigor/ArkTS tests 待 toolchain |
-| L2 Engine adapter unit tests | `URLProtocol` stub 已有 | `:native-netkit:test` fake `Call.Factory` 已有 | ArkTS adapter stub 待补 |
-| L3 Host loopback integration | `./scripts/verify-ios-network-harness.sh` 已有 | `./scripts/verify-android-network-harness.sh` 已有 | 待 DevEco/Hvigor 验证后补 |
+| L1 Client contract tests | `swift test` 已有 | `:native-netkit:test` 已有 | `hvigorw --mode module -p module=NativeNetKit test` 已有 |
+| L2 Engine adapter unit tests | `URLProtocol` stub 已有 | `:native-netkit:test` fake `Call.Factory` 已有 | `hvigorw --mode module -p module=NativeNetKit test` fake RCP session seam 已有，覆盖 Native request 到 platform request seam、platform response/error 到 Native result 的映射 |
+| L3 Host loopback integration | `./scripts/verify-ios-network-harness.sh` 已有 | `./scripts/verify-android-network-harness.sh` 已有 | pending：尚未补 host loopback harness |
 | L4 Package/example integration build | `./scripts/verify-ios.sh` | `./scripts/verify-android-library.sh` + `./scripts/verify-android-example.sh`，或 aggregate `./scripts/verify-android.sh` | `./scripts/verify-harmony.sh` 已通过 |
 | L5 Platform runtime validation | Simulator/device controlled runtime behavior pending | emulator/device controlled runtime behavior pending | device/runtime pending |
 | L6 Weak network | 后续扩展 | 后续扩展 | 后续扩展 |
@@ -69,7 +69,7 @@ Android/Harmony 在补齐平台专属测试健康矩阵前，review 先按“三
 - `./scripts/verify-local.sh` 不等于三端 IDE/device runtime 通过。
 - Android 的 Gradle verification 和 Android Studio/模拟器手动运行是两个验收层级；未实际执行后者时不要写成 IDE 通过。
 - `./scripts/verify-android-emulator.sh` 是 opt-in platform runtime readiness check，只验证 example 初始 UI 启动和证据采集；不点击 `GET`，不代表 Android Studio、真机、L5 platform runtime validation 或公网请求验证通过。
-- Harmony project metadata 已对齐 DevEco Studio 26 / Hvigor `modelVersion: "26.0.0"` 最小结构；HAR/HAP CLI build 已通过，但不代表 DevEco Studio 手工验收、设备运行或 L5 platform runtime validation。
+- Harmony project metadata 已对齐 DevEco Studio 26 / Hvigor `modelVersion: "26.0.0"` 最小结构；`./scripts/verify-harmony.sh` 覆盖 ArkTS L1/L2 unit tests 和 HAR/HAP CLI build。Harmony L2 使用 fake RCP session seam，只验证 Native request 到 platform request seam、platform response/error 到 Native result 的映射，不访问真实网络；这不代表 L3 host loopback、DevEco Studio 手工验收、设备运行或 L5 platform runtime validation。
 
 ## 手动验收
 

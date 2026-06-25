@@ -6,8 +6,8 @@
 
 | 层级 | 名称 | 目的 | 当前状态 |
 | --- | --- | --- | --- |
-| L1 | Client contract tests | client + injected engine，验证 request 构造、response/error 透传 | iOS/Android 已有；Harmony 目标一致 |
-| L2 | Engine adapter unit tests | native engine adapter + platform stub，验证 status/header/body/error mapping | iOS 已有 `URLProtocol` stub；Android 已有 fake `Call.Factory`；Harmony 待补 |
+| L1 | Client contract tests | client + injected engine，验证 request 构造、response/error 透传 | iOS/Android/Harmony 已有 |
+| L2 | Engine adapter unit tests | native engine adapter + platform stub，验证 status/header/body/error mapping | iOS 已有 `URLProtocol` stub；Android 已有 fake `Call.Factory`；Harmony 已有 fake RCP session seam |
 | L3 | Host loopback integration | host process + 真实 engine adapter + `127.0.0.1` mock server | iOS Swift host loopback check 已有；Android JVM host loopback check 已有；Harmony 待补 |
 | L4 | Package/example integration build | library package + example app build | iOS/Android/Harmony 有入口 |
 | L5 | Platform runtime validation | Simulator/emulator/device 上触发真实 runtime behavior；网络库场景应包含 controlled network request | 按阶段人工判断 |
@@ -46,6 +46,7 @@ Platform runtime readiness check 用来确认 Simulator/emulator/device、exampl
 - iOS PR preflight 跑：`./scripts/verify-ios-pr.sh`；它覆盖 L1、L2、L3 和 L4，其中 L3 是 Swift host loopback check，不覆盖 platform runtime readiness check 或 L5。
 - 日常 Android library 变更先跑 L1/L2：`./scripts/verify-android-library.sh`。
 - Android PR preflight 跑：`./scripts/verify-android-pr.sh`；它覆盖 L1、L2、L3 和 L4，其中 L3 是 JVM host loopback check，不覆盖 platform runtime readiness check 或 L5。
+- 日常 Harmony library 变更先跑 `./scripts/verify-harmony.sh`；它覆盖 L1、L2 和 L4，其中 L2 是 fake RCP session seam，覆盖 Native request 到 platform request seam、platform response/error 到 Native result 的映射，不覆盖真实网络、L3 或 L5。
 - 能在 L1/L2 验证的行为，不升级到 L3。
 - HTTP `503` 这类 adapter mapping 属于 L2；closed connection、unused local port、delay elapsed 这类真实网络边界才属于 host loopback。
 

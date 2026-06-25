@@ -1,4 +1,6 @@
-export type NativeHeaders = Record<string, Array<string>>;
+import rcp from '@hms.collaboration.rcp';
+
+export type NativeHeaders = Map<string, Array<string>>;
 
 export interface NativeRequest {
   method: string;
@@ -36,12 +38,85 @@ export interface NativeHttpEngine {
   execute(request: NativeRequest): Promise<NativeResponse>;
 }
 
-export class RcpNativeHttpEngine implements NativeHttpEngine {
-  async execute(_request: NativeRequest): Promise<NativeResponse> {
-    throw new NativeNetworkError(
-      NativeNetworkErrorCode.TRANSPORT_FAILURE,
-      'RCP engine wiring is pending DevEco/Hvigor verification',
+export interface RcpSessionLike {
+  fetch(request: RcpPlatformRequest): Promise<RcpPlatformResponse>;
+}
+
+export class RcpPlatformRequest {
+  public readonly method: string;
+  public readonly url: string;
+  public readonly headers: NativeHeaders;
+  public readonly body?: ArrayBuffer;
+
+  constructor(method: string, url: string, headers: NativeHeaders, body?: ArrayBuffer) {
+    this.method = method;
+    this.url = url;
+    this.headers = headers;
+    this.body = body;
+  }
+}
+
+export class RcpPlatformResponse {
+  public readonly statusCode: number;
+  public readonly headers: NativeHeaders;
+  public readonly body: ArrayBuffer;
+
+  constructor(statusCode: number, headers: NativeHeaders, body: ArrayBuffer = new ArrayBuffer(0)) {
+    this.statusCode = statusCode;
+    this.headers = headers;
+    this.body = body;
+  }
+}
+
+class DefaultRcpSession implements RcpSessionLike {
+  private readonly session: rcp.Session = rcp.createSession();
+
+  async fetch(request: RcpPlatformRequest): Promise<RcpPlatformResponse> {
+    const response = await this.session.fetch(new rcp.Request(
+      request.url,
+      request.method,
+      rcpHeaders(request.headers),
+      request.body,
+    ));
+    return new RcpPlatformResponse(
+      response.statusCode,
+      normalizeHeaders(response.headers),
+      response.body ?? new ArrayBuffer(0),
     );
+  }
+}
+
+export class RcpNativeHttpEngine implements NativeHttpEngine {
+  private readonly session: RcpSessionLike;
+
+  constructor(session: RcpSessionLike = new DefaultRcpSession()) {
+    this.session = session;
+  }
+
+  async execute(request: NativeRequest): Promise<NativeResponse> {
+    const start = Date.now();
+    const rcpRequest = new RcpPlatformRequest(
+      request.method,
+      request.url,
+      request.headers ?? new Map<string, Array<string>>(),
+      request.body,
+    );
+
+    try {
+      const response = await this.session.fetch(rcpRequest);
+      return {
+        statusCode: response.statusCode,
+        headers: response.headers,
+        body: response.body,
+        elapsedMilliseconds: Date.now() - start,
+      };
+    } catch (error) {
+      throw new NativeNetworkError(
+        NativeNetworkErrorCode.TRANSPORT_FAILURE,
+        'RCP request failed',
+        String(error),
+      );
+    }
   }
 }
 
@@ -56,7 +131,7 @@ export class NativeNetClient {
     return this.engine.execute(request);
   }
 
-  get(url: string, headers: NativeHeaders = {}): Promise<NativeResponse> {
+  get(url: string, headers: NativeHeaders = new Map<string, Array<string>>()): Promise<NativeResponse> {
     return this.execute({
       method: 'GET',
       url,
@@ -75,4 +150,34 @@ export class MockNativeHttpEngine implements NativeHttpEngine {
   execute(request: NativeRequest): Promise<NativeResponse> {
     return this.handler(request);
   }
+}
+
+function normalizeHeaders(headers?: rcp.ResponseHeaders): NativeHeaders {
+  const normalized: NativeHeaders = new Map<string, Array<string>>();
+  if (!headers) {
+    return normalized;
+  }
+
+  Object.keys(headers).forEach((name: string) => {
+    const value = Reflect.get(headers, name) as string | Array<string> | undefined;
+    if (typeof value === 'string') {
+      normalized.set(name, [value]);
+    } else if (Array.isArray(value)) {
+      normalized.set(name, value);
+    }
+  });
+  return normalized;
+}
+
+function rcpHeaders(headers: NativeHeaders): rcp.RequestHeaders {
+  const platformHeaders = new Object() as rcp.RequestHeaders;
+  headers.forEach((values: Array<string>, name: string) => {
+    if (values.length === 1) {
+      Reflect.set(platformHeaders, name, values[0]);
+    } else {
+      // RCP RequestHeaders accepts string arrays, so keep repeated header values intact.
+      Reflect.set(platformHeaders, name, values);
+    }
+  });
+  return platformHeaders;
 }

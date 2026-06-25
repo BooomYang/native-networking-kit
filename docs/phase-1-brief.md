@@ -30,11 +30,11 @@
 - 当前 Codex shell 中，iOS 可通过 Xcode 26.5 和 Swift 6.3.2 做本地验证。
 - Java 17 可用。
 - 因为没有全局 `gradle`，Android 必须使用 Gradle Wrapper。
-- Harmony 已通过 DevEco Studio bundled `hvigorw` 的 HAR/HAP CLI build；设备运行和 runtime validation 仍不在 Phase 1 已验证范围内。
+- Harmony 已通过 DevEco Studio bundled `ohpm`/`hvigorw` 的 ArkTS L1/L2 unit tests 和 HAR/HAP CLI build；设备运行和 runtime validation 仍不在 Phase 1 已验证范围内。
 
 ## 验收标准
 
 - 新的 Codex thread 读取 `README.md`、`AGENTS.md` 和 `docs/verification-matrix.md` 后，可以恢复项目目的和命令。
 - iOS package tests 和 Xcode host example app build 通过 `./scripts/verify-ios.sh`。
 - Android 的 library test/lint/local Maven publishing 由 `./scripts/verify-android-library.sh` 覆盖；example 本地宿主集成 lint/debug assemble 由 `./scripts/verify-android-example.sh` 覆盖；`./scripts/verify-android.sh` 保持聚合入口。
-- Harmony 具备 DevEco Studio 26 / Hvigor `modelVersion: "26.0.0"` 风格 skeleton，并有稳定 HAR/HAP CLI build 入口。
+- Harmony 具备 DevEco Studio 26 / Hvigor `modelVersion: "26.0.0"` 风格 skeleton，并有稳定 ArkTS L1/L2 unit test 与 HAR/HAP CLI build 入口。
