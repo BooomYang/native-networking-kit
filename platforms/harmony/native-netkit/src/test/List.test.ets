@@ -76,12 +76,15 @@ function nativeNetKitTest() {
         expect(request.method).assertEqual('POST');
         expect(request.url).assertEqual('https://example.com/upload');
         expect(request.headers.get('X-Trace-ID')?.[0]).assertEqual('trace-1');
+        expect(request.headers.get('Accept')?.[0]).assertEqual('application/json');
+        expect(request.headers.get('Accept')?.[1]).assertEqual('text/plain');
         expect(bufferText(request.body as ArrayBuffer)).assertEqual('payload');
         return new RcpPlatformResponse(201, new Map<string, Array<string>>());
       });
       const engine = new RcpNativeHttpEngine(session);
       const headers: NativeHeaders = new Map<string, Array<string>>();
       headers.set('X-Trace-ID', ['trace-1']);
+      headers.set('Accept', ['application/json', 'text/plain']);
       const request: NativeRequest = {
         method: 'POST',
         url: 'https://example.com/upload',

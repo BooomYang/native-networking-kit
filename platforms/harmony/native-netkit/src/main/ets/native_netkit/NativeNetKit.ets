@@ -175,6 +175,7 @@ function rcpHeaders(headers: NativeHeaders): rcp.RequestHeaders {
     if (values.length === 1) {
       Reflect.set(platformHeaders, name, values[0]);
     } else {
+      // RCP RequestHeaders accepts string arrays, so keep repeated header values intact.
       Reflect.set(platformHeaders, name, values);
     }
   });
