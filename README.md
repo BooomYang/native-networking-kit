@@ -13,7 +13,7 @@ NativeNetKit 是 iOS、Android、HarmonyOS 三端原生高性能网络库的 Pha
 ./scripts/verify-local.sh
 ```
 
-`./scripts/verify-local.sh` 会依次运行 doctor、iOS、Android 和 Harmony 检查。当前已知结果是：iOS 已完成 Swift Package tests 和 Xcode host app build；Android 有 Gradle verification 入口，但 Android Studio/模拟器直接验收需要在具备 Android SDK 的本机环境中明确执行；Harmony 已对齐 DevEco Studio 26 / Hvigor `modelVersion: "26.0.0"` 工程结构，并已通过本机 HAR/HAP CLI build。
+`./scripts/verify-local.sh` 会依次运行 doctor、iOS、Android 和 Harmony 检查。当前已知结果是：iOS 已完成 Swift Package tests 和 Xcode host app build；Android 有 Gradle verification 入口，但 Android Studio/模拟器直接验收需要在具备 Android SDK 的本机环境中明确执行；Harmony 已对齐 DevEco Studio 26 / Hvigor `modelVersion: "26.0.0"` 工程结构，并已通过本机 ArkTS L1/L2 unit tests 和 HAR/HAP CLI build。
 
 ## 前置条件
 
@@ -21,7 +21,7 @@ NativeNetKit 是 iOS、Android、HarmonyOS 三端原生高性能网络库的 Pha
 | --- | --- |
 | iOS | 当前 Codex shell 中可用 Xcode 26.5 和 Swift 6.3.2 |
 | Android | Java 17；Android SDK 位于 `ANDROID_HOME`、`ANDROID_SDK_ROOT` 或 `~/Library/Android/sdk`；构建使用 `platforms/android/gradlew` |
-| HarmonyOS | DevEco Studio 26 / Hvigor；`./scripts/verify-harmony.sh` 会优先使用 repo 或 PATH 上的 `hvigorw`，也会探测 DevEco Studio bundled `hvigorw` |
+| HarmonyOS | DevEco Studio 26 / Hvigor；`./scripts/verify-harmony.sh` 会优先使用 repo 或 PATH 上的 `hvigorw`，也会探测 DevEco Studio bundled `ohpm`/`hvigorw` |
 
 验证脚本会把 tool cache、SwiftPM cache、Android user state 和 Maven local output 重定向到 `.tmp/`，使本地验证尽量保持在仓库目录内。
 
@@ -37,7 +37,7 @@ NativeNetKit 是 iOS、Android、HarmonyOS 三端原生高性能网络库的 Pha
 | `./scripts/verify-android-library.sh` | 运行 Android library tests、lint 和 local Maven publishing | 需 Android SDK；验证组件可独立构建和发布 |
 | `./scripts/verify-android-example.sh` | 运行 Android example lint 和 debug assemble | 需 Android SDK；验证 example 通过本地 project dependency 集成 library |
 | `./scripts/verify-android.sh` | 聚合运行 Android library 和 example 验证 | 需 Android SDK；未做 Android Studio/模拟器直接验收时不要标记为 IDE 通过 |
-| `./scripts/verify-harmony.sh` | 若 Hvigor 可用则运行 HAR/HAP 验证，否则输出 pending | 已通过：可使用 DevEco Studio bundled `hvigorw` 构建 HAR 和 HAP |
+| `./scripts/verify-harmony.sh` | 若 `ohpm`/Hvigor 可用则运行 Harmony L1/L2 unit tests 和 HAR/HAP 验证，否则输出 pending | 已通过：可使用 DevEco Studio bundled `ohpm`/`hvigorw` 运行 tests、构建 HAR 和 HAP |
 | `./scripts/verify-local.sh` | 依次运行 doctor、iOS、Android 和 Harmony 检查 | 可作为总入口；Android 依赖本机 SDK |
 
 ## Phase 1 范围
@@ -100,4 +100,4 @@ Phase 1 roadmap 来自本仓库外部的参考设计文档：
 
 ## 当前成熟度
 
-Phase 1 bootstrap 已具备 README、AGENTS.md、docs、scripts、platform project skeleton、examples 和 unit-test entrypoints。iOS 已完成本地 Swift/Xcode 构建验证和 Swift host loopback check；iOS Simulator/device L3 仍是 pending。Android 已具备 library 独立验证、example 宿主集成验证和 aggregate Gradle verification 入口，但 Android Studio/模拟器直接验收需要单独记录；Harmony 已对齐 DevEco Studio 26 工程结构，并已完成 HAR/HAP CLI build 验证。
+Phase 1 bootstrap 已具备 README、AGENTS.md、docs、scripts、platform project skeleton、examples 和 unit-test entrypoints。iOS 已完成本地 Swift/Xcode 构建验证和 Swift host loopback check；iOS Simulator/device L3 仍是 pending。Android 已具备 library 独立验证、example 宿主集成验证和 aggregate Gradle verification 入口，但 Android Studio/模拟器直接验收需要单独记录；Harmony 已对齐 DevEco Studio 26 工程结构，并已完成 ArkTS L1/L2 unit tests 与 HAR/HAP CLI build 验证。

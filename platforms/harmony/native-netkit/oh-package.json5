@@ -6,5 +6,8 @@
   "main": "Index.ets",
   "author": "AI First",
   "license": "UNLICENSED",
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "@ohos/hypium": "1.0.25"
+  }
 }
