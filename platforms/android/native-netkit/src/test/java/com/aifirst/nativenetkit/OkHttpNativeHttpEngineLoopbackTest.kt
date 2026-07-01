@@ -1,7 +1,9 @@
 package com.aifirst.nativenetkit
 
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
+import okhttp3.sse.EventSources
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -14,14 +16,14 @@ import kotlin.test.assertTrue
 class OkHttpNativeHttpEngineLoopbackTest {
     private val baseUrl: String = requireEnv("NATIVE_NET_KIT_MOCK_BASE_URL").trimEnd('/')
     private val unusedPort: Int = requireEnv("NATIVE_NET_KIT_UNUSED_PORT").toInt()
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(1, TimeUnit.SECONDS)
+        .readTimeout(2, TimeUnit.SECONDS)
+        .callTimeout(4, TimeUnit.SECONDS)
+        .build()
     private val client = NativeNetClient(
-        OkHttpNativeHttpEngine(
-            OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.SECONDS)
-                .readTimeout(2, TimeUnit.SECONDS)
-                .callTimeout(4, TimeUnit.SECONDS)
-                .build(),
-        ),
+        engine = OkHttpNativeHttpEngine(okHttpClient),
+        sseEngine = OkHttpNativeSseEngine(EventSources.createFactory(okHttpClient)),
     )
 
     @Test
@@ -77,6 +79,43 @@ class OkHttpNativeHttpEngineLoopbackTest {
 
         assertEquals(NativeNetworkErrorCode.TRANSPORT_FAILURE, error.code)
         assertFalse(error.rawDescription.isNullOrEmpty())
+    }
+
+    @Test
+    fun mockModelApiSseResponseEmitsOrderedEvents() = runTest {
+        // 验证意图：
+        // - 场景：host loopback server 模拟大模型 API 的 `text/event-stream` 响应。
+        // - 行为：`NativeNetClient.stream` 应通过真实 OkHttp SSE adapter 按顺序暴露 event type 和 JSON data。
+        // - 风险：防止标准 SSE 请求在真实 transport 边界下退化为一次性 body 读取或丢失事件顺序。
+        val requestBody = """
+            {"model":"native-netkit-mock-model","stream":true,"messages":[{"role":"user","content":"Say hello"}]}
+        """.trimIndent().encodeToByteArray()
+
+        val events = client.stream(
+            NativeRequest(
+                method = "POST",
+                url = "$baseUrl/v1/chat/completions",
+                headers = mapOf(
+                    "Authorization" to listOf("Bearer loopback-token"),
+                    "Accept" to listOf("text/event-stream"),
+                ),
+                body = requestBody,
+            ),
+        ).toList()
+
+        assertEquals(
+            listOf(
+                "response.created",
+                "response.output_text.delta",
+                "response.output_text.delta",
+                "response.completed",
+            ),
+            events.map { it.type },
+        )
+        assertTrue(events[0].data.contains("resp_mock_1"))
+        assertTrue(events[1].data.contains("\"delta\":\"Hel\""))
+        assertTrue(events[2].data.contains("\"delta\":\"lo\""))
+        assertTrue(events[3].data.contains("\"output_text\":\"Hello\""))
     }
 
     private fun NativeResponse.header(name: String): String? {

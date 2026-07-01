@@ -22,7 +22,8 @@ android {
 
 dependencies {
     api(libs.okhttp)
-    implementation(libs.coroutines.core)
+    api(libs.okhttp.sse)
+    api(libs.coroutines.core)
 
     testImplementation(kotlin("test"))
     testImplementation(libs.coroutines.test)

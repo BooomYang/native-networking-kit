@@ -1,5 +1,7 @@
 package com.aifirst.nativenetkit
 
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -53,5 +55,41 @@ class NativeNetKitTest {
 
         assertEquals(expected.code, actual.code)
         assertEquals(expected.message, actual.message)
+    }
+
+    @Test
+    fun clientKeepsSingleEngineJvmConstructor() {
+        // 验证意图：
+        // - 场景：已有 JVM 调用方只注入 `NativeHttpEngine` 构造 `NativeNetClient`。
+        // - 行为：class 应继续暴露 `NativeNetClient(NativeHttpEngine)` public constructor。
+        // - 风险：防止新增 SSE engine dependency 破坏已编译 consumer 的 binary compatibility。
+        val constructor = NativeNetClient::class.java.getConstructor(NativeHttpEngine::class.java)
+
+        assertEquals(NativeNetClient::class.java, constructor.declaringClass)
+    }
+
+    @Test
+    fun clientForwardsSseRequestToInjectedEngine() = runTest {
+        // 验证意图：
+        // - 场景：调用方通过 `NativeNetClient.stream` 发起 SSE 请求。
+        // - 行为：client 应把 request 交给 injected SSE engine 并暴露事件流。
+        // - 风险：防止 client 层绕过可替换的 streaming engine boundary。
+        val sseEngine = NativeSseEngine { request ->
+            assertEquals("GET", request.method)
+            assertEquals("https://example.com/events", request.url)
+            assertEquals(listOf("Bearer token"), request.headers["Authorization"])
+            flowOf(NativeSseEvent(id = "1", type = "message", data = "ok"))
+        }
+        val client = NativeNetClient(
+            engine = NativeHttpEngine { error("HTTP engine should not be used") },
+            sseEngine = sseEngine,
+        )
+
+        val event = client.stream(
+            url = "https://example.com/events",
+            headers = mapOf("Authorization" to listOf("Bearer token")),
+        ).first()
+
+        assertEquals(NativeSseEvent(id = "1", type = "message", data = "ok"), event)
     }
 }

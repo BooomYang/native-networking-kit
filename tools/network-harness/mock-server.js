@@ -14,6 +14,91 @@ function send(res, statusCode, body, headers = {}) {
   res.end(body);
 }
 
+function collectRequestBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(chunk));
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    req.on("error", reject);
+  });
+}
+
+function writeSseEvent(res, event, data) {
+  res.write(`event: ${event}\n`);
+  res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+async function sendMockModelSse(req, res) {
+  const body = await collectRequestBody(req);
+  const authorization = req.headers.authorization || "";
+
+  if (req.method !== "POST") {
+    send(res, 405, "method-not-allowed", { "Allow": "POST" });
+    return;
+  }
+
+  if (authorization !== "Bearer loopback-token") {
+    send(res, 401, "unauthorized");
+    return;
+  }
+
+  if (!body.includes('"stream":true')) {
+    send(res, 400, "stream-required");
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "X-NativeNetKit-Harness": "mock-model-sse",
+  });
+
+  const events = [
+    [
+      "response.created",
+      {
+        id: "resp_mock_1",
+        object: "response",
+        model: "native-netkit-mock-model",
+      },
+    ],
+    [
+      "response.output_text.delta",
+      {
+        delta: "Hel",
+      },
+    ],
+    [
+      "response.output_text.delta",
+      {
+        delta: "lo",
+      },
+    ],
+    [
+      "response.completed",
+      {
+        id: "resp_mock_1",
+        output_text: "Hello",
+      },
+    ],
+  ];
+
+  let index = 0;
+  const writeNext = () => {
+    if (index >= events.length) {
+      res.end();
+      return;
+    }
+
+    const [event, data] = events[index];
+    writeSseEvent(res, event, data);
+    index += 1;
+    setTimeout(writeNext, 25);
+  };
+  writeNext();
+}
+
 function reserveAndClosePort() {
   return new Promise((resolve, reject) => {
     const server = http.createServer((_, res) => send(res, 500, "reserved"));
@@ -52,6 +137,13 @@ const server = http.createServer((req, res) => {
 
   if (url.pathname === "/close") {
     req.socket.destroy();
+    return;
+  }
+
+  if (url.pathname === "/v1/chat/completions") {
+    sendMockModelSse(req, res).catch((error) => {
+      send(res, 500, `mock-model-error: ${error.message}`);
+    });
     return;
   }
 

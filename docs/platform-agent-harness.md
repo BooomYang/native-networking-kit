@@ -116,12 +116,16 @@ L5 升级条件：
 目的：
 
 - 验证 Gradle + ADB 路径能否稳定完成 install、start、foreground check、`uiautomator dump` 和 log capture。
+- 在没有 online ADB target 时，由脚本稳定启动本机 AVD 并在验证结束后清理，避免依赖人工先打开 Android Studio 或手动保持 emulator 运行。
 - 补充 Android emulator platform runtime readiness evidence，但不替代 `./scripts/verify-android.sh`。
 
 边界：
 
 - 当前 `android-coroutines` 已作为并发规则采纳；Android emulator readiness check 是 opt-in runtime evidence，不是默认 Android verification。
 - 优先使用本机 Android SDK 下的 `adb`，不要依赖不稳定的 IDE Run Configuration。
+- 脚本可复用现有 online ADB target；没有 target 时会自动启动 AVD。默认优先使用 `Medium_Phone_API_36.0`，否则使用 `emulator -list-avds` 的第一个 AVD；可通过 `NATIVE_NET_KIT_ANDROID_AVD` 指定。
+- 如果脚本自己启动了 emulator，默认会在退出时 `adb emu kill` 清理；需要保留时设置 `NATIVE_NET_KIT_KEEP_EMULATOR=1`。
+- 在当前 macOS 环境中，plain `nohup emulator ... &` 会早期退出并出现 `Broken pipe / no client check-in`；脚本使用 macOS `script` 分配 pseudo-terminal 来保持 emulator 启动路径稳定。不要把普通后台启动写回 harness。
 - emulator readiness check 通过不等于 Android Studio 手动验收、真机 validation、L5 platform runtime validation 或公网请求验证。
 - 脚本只验证 example app 初始 UI 可启动和可采集；不点击 `GET`，不触发公网请求。
 
@@ -129,6 +133,7 @@ L5 升级条件：
 
 - 使用 `./scripts/verify-android-library.sh` 保持 `:native-netkit` tests、lint 和 local Maven publishing 基线。
 - 使用 `./scripts/verify-android-example.sh` 保持 example 本地宿主集成 build 基线；需要完整 Android Gradle baseline 时使用 `./scripts/verify-android.sh`。
+- 没有 online target 时，用 pseudo-terminal 启动 AVD，等待 `adb devices` 出现单一 target，并轮询 `sys.boot_completed=1`。
 - 使用 ADB 安装并启动 `:example`。
 - 用 `dumpsys window` 确认前台 app。
 - 用 `uiautomator dump` 采集可读 UI 信息，并确认初始 `Ready` 和 `GET` 可见。
