@@ -88,13 +88,13 @@ Android PR preflight：
 
 该脚本组合 Android library、example 和 host loopback checks，覆盖 L1、L2、L3 和 L4；其中 L3 仍不是 emulator/device runtime validation。
 
-需要采集 Android platform runtime readiness evidence 时，先启动一个 emulator 或连接一个设备，再运行 opt-in 脚本：
+需要采集 Android platform runtime readiness evidence 时，运行 opt-in 脚本：
 
 ```bash
 ./scripts/verify-android-emulator.sh
 ```
 
-该脚本会先运行 `./scripts/verify-android.sh`，再通过本机 Android SDK 下的 `adb` 安装并启动 `:example`，采集 foreground、`uiautomator dump` 和 bounded logcat 证据到 `.tmp/android-emulator-harness/`。如果有多个 online ADB target，需要设置 `ANDROID_SERIAL`。该脚本只验证初始 UI 的 `Ready` 和 `GET` 可见，不点击 `GET`，不计入 L5，也不代表 Android Studio、真机或公网请求验证通过。
+该脚本会先运行 `./scripts/verify-android.sh`，再通过本机 Android SDK 下的 `adb` 安装并启动 `:example`，采集 foreground、`uiautomator dump` 和 bounded logcat 证据到 `.tmp/android-emulator-harness/`。如果没有 online ADB target，脚本会自动启动一个 AVD：默认优先使用 `Medium_Phone_API_36.0`，否则使用 `emulator -list-avds` 的第一个 AVD；也可以用 `NATIVE_NET_KIT_ANDROID_AVD` 指定 AVD。如果有多个 online ADB target，需要设置 `ANDROID_SERIAL`。默认由脚本启动的 emulator 会在退出时关闭；需要保留时设置 `NATIVE_NET_KIT_KEEP_EMULATOR=1`。该脚本只验证初始 UI 的 `Ready` 和 `GET` 可见，不点击 `GET`，不计入 L5，也不代表 Android Studio、真机或公网请求验证通过。
 
 ## 当前验收边界
 
@@ -110,3 +110,4 @@ Android PR preflight：
 - Android Studio 没有识别 module：确认打开的是 `platforms/android`，不是仓库根目录或单个 module。
 - Android SDK not found：安装 Android SDK，或设置 `ANDROID_HOME` / `ANDROID_SDK_ROOT`。
 - Gradle 依赖写入用户目录：使用根脚本验证，脚本会把相关 cache 指到 `.tmp/`。
+- emulator 无法通过普通后台命令启动：使用 `./scripts/verify-android-emulator.sh`，不要手写 `nohup emulator ... &`；脚本会通过 macOS `script` 分配 pseudo-terminal，避免 emulator 早期 `Broken pipe / no client check-in` 退出。
